@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle - Marbas Propiedades</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css"/>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" type="image/x-icon" href="imagenes/MARBAS.ico">
+</head>
+<body>
+
+    <header class="navbar">
+        <a href="index.html" class="logo-wrapper">
+            <img src="imagenes/MARBAS.png" alt="Marbas Propiedades Logo" class="logo-img-full">
+            <div class="nom-mat">
+                <span class="logo-text">MARBAS PROPIEDADES</span>
+                <span class="mat-text">Martin Bascur - MAT 3716</span>
+            </div>
+        </a>
+        <button class="menu-toggle" id="mobile-menu-btn">☰</button>
+        <nav class="main-menu" id="main-menu">
+            <a href="index.html">Inicio</a>
+            <a href="index.html#catalogo">En venta</a>
+            <a href="index.html#contacto">Contacto</a>
+        </nav>
+    </header>
+
+    <main class="main-container">
+        <section class="tour-section">
+            <div class="media-tabs">
+                <button id="btn-fotos" class="tab-btn active">Fotos</button>
+                <button id="btn-360" class="tab-btn oculto">Tour 360°</button>
+            </div>
+
+            <div id="galeria-container" class="media-container">
+                <div class="foto-principal-wrapper">
+                    <button id="btn-prev" class="nav-arrow prev-arrow oculto">&#10094;</button>
+                    <img id="foto-principal" src="" alt="Foto de la propiedad">
+                    <button id="btn-next" class="nav-arrow next-arrow oculto">&#10095;</button>
+                </div>
+                <div id="tira-miniaturas" class="tira-miniaturas"></div>
+            </div>
+
+            <div id="tour-wrapper" class="media-container oculto">
+                <div id="tour-overlay-title">Cargando...</div>
+                <div id="panorama-container"></div>
+                <div id="tira-miniaturas-360" class="tira-miniaturas"></div>
+            </div>
+
+            <p class="instruccion" id="texto-instruccion">Usa el mouse o el dedo para navegar por el tour 360</p>
+        </section>
+
+        <aside class="info-section">
+            <span class="status">EN VENTA</span>
+            <h1 class="property-title" id="detalle-titulo">Cargando...</h1>
+            <p class="location" id="detalle-ubicacion">Buscando ubicación...</p>
+            <div class="price-tag" id="detalle-precio">USD ---</div>
+
+            <div class="specs-grid">
+                <div class="spec-item"><strong id="detalle-dorm">-</strong> Dorm.</div>
+                <div class="spec-item"><strong id="detalle-banos">-</strong> Baño</div>
+                <div class="spec-item"><strong id="detalle-metros">-</strong> m²</div>
+            </div>
+
+            <div class="property-description">
+                <h3>Descripción de la Propiedad</h3>
+                <p id="detalle-descripcion">Cargando descripción...</p>
+            </div>
+
+            <a href="#" class="btn-whatsapp" id="detalle-whatsapp" target="_blank">
+                Consultar por WhatsApp
+            </a>
+        </aside>
+    </main>
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+    <script src="js/detalle.js"></script>
+</body>
+</html>
