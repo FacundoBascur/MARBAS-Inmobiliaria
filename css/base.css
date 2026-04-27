@@ -1,0 +1,281 @@
+/* ==============================================================
+   1. VARIABLES GLOBALES, RESET Y BODY
+   ============================================================== */
+:root {
+    --primary-blue: #001F3F; 
+    --accent-yellow: #FDC830;
+    --text-on-blue: #FFFFFF; 
+    --text-on-white: #333333;
+    --background-gray: #F4F7F6;
+    --white: #FFFFFF;
+    --accent-orange: #FF6B6B;
+}
+
+html { 
+    scroll-behavior: smooth; 
+}
+
+body { 
+    animation: aparecerSuave 0.6s ease-out forwards; 
+}
+
+@keyframes aparecerSuave { 
+    0% { opacity: 0; transform: translateY(15px); } 
+    100% { opacity: 1; transform: translateY(0); } 
+}
+
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+}
+
+body { 
+    font-family: 'Montserrat', sans-serif; 
+    background-color: var(--background-gray); 
+    color: var(--text-on-white); 
+    overflow-x: hidden; 
+    min-height: 100vh;
+}
+
+.oculto { 
+    display: none !important; 
+}
+
+/* ==============================================================
+   2. BOTONES GLOBALES
+   ============================================================== */
+.btn-detalle { 
+    display: block; 
+    text-align: center; 
+    background: var(--primary-blue); 
+    color: var(--text-on-blue); 
+    text-decoration: none; 
+    padding: 0.8rem; 
+    border-radius: 6px; 
+    font-weight: bold; 
+    transition: all 0.3s ease; 
+    border: 2px solid var(--primary-blue); 
+}
+
+.btn-detalle:hover { 
+    background: var(--accent-yellow); 
+    color: var(--primary-blue); 
+    border-color: var(--accent-yellow); 
+}
+
+.btn-whatsapp { 
+    display: block; 
+    text-align: center; 
+    background: #25D366; 
+    color: white; 
+    text-decoration: none; 
+    padding: 1rem; 
+    border-radius: 8px; 
+    margin-top: 1.5rem; 
+    font-weight: bold; 
+    transition: all 0.3s ease; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+}
+
+.btn-whatsapp:hover { 
+    background: #128C7E; 
+    transform: translateY(-2px); 
+    box-shadow: 0 6px 15px rgba(37, 211, 102, 0.3); 
+}
+
+.btn-submit { 
+    background: var(--primary-blue); 
+    color: var(--accent-yellow); 
+    padding: 15px; 
+    border: none; 
+    border-radius: 6px; 
+    font-weight: bold; 
+    font-size: 1.1rem; 
+    cursor: pointer; 
+    transition: 0.3s; 
+    width: 100%; 
+}
+
+.btn-submit:hover { 
+    background: var(--accent-yellow); 
+    color: var(--primary-blue); 
+}
+
+/* ==============================================================
+   3. HEADER (NAVBAR)
+   ============================================================== */
+.navbar { 
+    background: var(--primary-blue); 
+    padding: 1rem 5%; 
+    border-bottom: 3px solid var(--accent-yellow); 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    position: sticky; 
+    top: 0; 
+    z-index: 1000; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+}
+
+.logo-wrapper { 
+    display: flex; 
+    align-items: center; 
+    text-decoration: none; 
+}
+
+.logo-img-full { 
+    height: 80px; 
+    width: auto; 
+}
+
+.nom-mat { 
+    display: flex; 
+    flex-direction: column; 
+    margin-left: 15px; 
+    justify-content: center; 
+}
+
+.logo-text { 
+    color: var(--text-on-blue); 
+    font-size: 1.5rem; 
+    font-weight: 700; 
+    letter-spacing: 2px; 
+}
+
+.mat-text { 
+    color: var(--accent-yellow); 
+    font-size: 0.85rem; 
+    font-weight: bold; 
+    letter-spacing: 1px; 
+    margin-top: 2px; 
+}
+
+.main-menu { 
+    display: flex; 
+    gap: 1.5rem; 
+}
+
+.main-menu a { 
+    color: var(--accent-yellow); 
+    text-decoration: none; 
+    font-weight: bold; 
+    font-size: 0.9rem; 
+    transition: 0.3s ease; 
+}
+
+.main-menu a:hover { 
+    color: var(--text-on-blue); 
+}
+
+.menu-toggle { 
+    display: none; 
+    background: none; 
+    border: none; 
+    color: var(--accent-yellow); 
+    font-size: 2rem; 
+    cursor: pointer; 
+}
+
+/* ==============================================================
+   4. FOOTER COMPLETO (¡El que te había borrado sin querer!)
+   ============================================================== */
+.footer { 
+    background: var(--primary-blue); 
+    color: var(--white); 
+    padding: 3rem 5% 1rem 5%; 
+    border-top: 5px solid var(--accent-yellow); 
+    margin-top: 40px; 
+}
+
+.footer-content { 
+    display: flex; 
+    flex-wrap: wrap; 
+    justify-content: space-between; 
+    max-width: 1200px; 
+    margin: 0 auto; 
+    gap: 2rem; 
+    margin-bottom: 2rem; 
+}
+
+.logo-footer { 
+    height: 60px; 
+    margin-bottom: 1rem; 
+    border-radius: 4px; 
+}
+
+.footer-links { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 0.5rem; 
+}
+
+.footer-links h4 { 
+    color: var(--accent-yellow); 
+    margin-bottom: 10px; 
+}
+
+.footer-links a { 
+    color: var(--white); 
+    text-decoration: none; 
+    transition: 0.3s; 
+}
+
+.footer-links a:hover { 
+    color: var(--accent-yellow); 
+    padding-left: 5px; 
+}
+
+.footer-bottom { 
+    text-align: center; 
+    border-top: 1px solid rgba(255,255,255,0.1); 
+    padding-top: 1rem; 
+    font-size: 0.8rem; 
+    color: #aaa; 
+}
+
+/* ==============================================================
+   5. RESPONSIVE BASE (Menú Móvil y Ajustes de Celular)
+   ============================================================== */
+@media (max-width: 768px) {
+    .navbar { 
+        flex-wrap: wrap; 
+    }
+    
+    .logo-img-full { 
+        height: 40px; 
+    }
+    
+    .logo-text { 
+        font-size: 1rem; 
+        margin-left: 5px; 
+    }
+    
+    .menu-toggle { 
+        display: block; 
+    }
+    
+    .main-menu { 
+        display: none; 
+        width: 100%; 
+        flex-direction: column; 
+        align-items: center; 
+        padding-top: 1rem; 
+    }
+    
+    .main-menu a { 
+        padding: 10px 0; 
+        width: 100%; 
+        text-align: center; 
+        border-top: 1px solid rgba(255, 255, 255, 0.1); 
+    }
+    
+    .main-menu.active { 
+        display: flex; 
+    }
+    
+    .footer-content { 
+        justify-content: center; 
+        text-align: center; 
+    }
+}
