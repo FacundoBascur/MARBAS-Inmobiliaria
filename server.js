@@ -193,7 +193,6 @@ app.delete('/api/propiedades/:id', verificarToken, (req, res) => {
     });
 });
 
-// --- CAMBIO 2: NUEVA RUTA PARA ENVIAR EMAILS ---
 // --- NUEVA RUTA: ENVIAR EMAILS ---
 app.post('/api/contacto', async (req, res) => {
     const { nombre, telefono, email, mensaje } = req.body;

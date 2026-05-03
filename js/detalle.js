@@ -186,3 +186,64 @@ async function cargarDetalle() {
 }
 
 cargarDetalle();
+
+// --- ENVIAR FORMULARIO DE CONSULTA EN DETALLE ---
+const formConsultaDetalle = document.getElementById('form-consulta-detalle');
+
+if (formConsultaDetalle) {
+    formConsultaDetalle.addEventListener('submit', async (e) => {
+        // 1. Evitamos que la página se recargue de golpe y se rompa
+        e.preventDefault(); 
+        
+        const mensajeRespuesta = document.getElementById('consulta-mensaje-estado');
+        const botonEnviar = formConsultaDetalle.querySelector('.btn-submit');
+        
+        // Capturamos el título de la casa para saber por cuál preguntan
+        const tituloPropiedad = document.getElementById('detalle-titulo').innerText;
+
+        // Avisamos al usuario y bloqueamos el botón para evitar spam
+        mensajeRespuesta.innerText = "Enviando mensaje, por favor esperá...";
+        mensajeRespuesta.style.color = "var(--primary-blue)";
+        mensajeRespuesta.classList.remove('oculto');
+        
+        botonEnviar.disabled = true;
+        botonEnviar.innerText = "Enviando...";
+
+        // Juntamos el título de la casa con el mensaje que escribió el cliente
+        const textoCliente = document.getElementById('consulta-mensaje').value;
+        const mensajeFinal = `Consulta por la propiedad: ${tituloPropiedad}\n\n${textoCliente}`;
+
+        // Armamos los 4 datos
+        const datos = {
+            nombre: document.getElementById('consulta-nombre').value,
+            telefono: document.getElementById('consulta-telefono').value,
+            email: document.getElementById('consulta-email').value,
+            mensaje: mensajeFinal 
+        };
+
+        try {
+            const respuesta = await fetch('http://localhost:3000/api/contacto', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datos)
+            });
+
+            if (respuesta.ok) {
+                mensajeRespuesta.innerText = "¡Mensaje enviado con éxito! Nos pondremos en contacto a la brevedad.";
+                mensajeRespuesta.style.color = "green";
+                formConsultaDetalle.reset(); 
+            } else {
+                mensajeRespuesta.innerText = "Error al enviar el mensaje. Intentá nuevamente.";
+                mensajeRespuesta.style.color = "red";
+            }
+        } catch (error) {
+            console.error("Error enviando correo:", error);
+            mensajeRespuesta.innerText = "Error de conexión con el servidor.";
+            mensajeRespuesta.style.color = "red";
+        } finally {
+            // Habilitamos el botón de nuevo
+            botonEnviar.disabled = false;
+            botonEnviar.innerText = "Enviar Consulta";
+        }
+    });
+}
