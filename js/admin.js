@@ -72,9 +72,11 @@ function abrirModalEditar(id) {
         document.getElementById('edit-bedrooms').value = casa.bedrooms;
         document.getElementById('edit-bathroom').value = casa.bathroom;
         document.getElementById('edit-meters').value = casa.meters;
-        
-        // --- CAMBIO: Llenamos el textarea con la descripción existente ---
         document.getElementById('edit-description').value = casa.description || '';
+        
+        // --- NUEVO: Cargamos las coordenadas en el modal si existen ---
+        if(document.getElementById('edit-latitude')) document.getElementById('edit-latitude').value = casa.latitude || '';
+        if(document.getElementById('edit-longitude')) document.getElementById('edit-longitude').value = casa.longitude || '';
 
         document.getElementById('modal-editar').classList.remove('oculto');
     }
@@ -94,8 +96,10 @@ async function guardarEdicion() {
         bedrooms: document.getElementById('edit-bedrooms').value,
         bathroom: document.getElementById('edit-bathroom').value,
         meters: document.getElementById('edit-meters').value,
-        // --- CAMBIO: Atrapamos lo que escribió tu hermano al editar ---
-        description: document.getElementById('edit-description').value
+        description: document.getElementById('edit-description').value,
+        // --- NUEVO: Atrapamos las coordenadas al guardar ---
+        latitude: document.getElementById('edit-latitude') ? document.getElementById('edit-latitude').value : null,
+        longitude: document.getElementById('edit-longitude') ? document.getElementById('edit-longitude').value : null
     };
 
     try {
@@ -152,6 +156,7 @@ document.getElementById('form-admin').addEventListener('submit', async (e) => {
     mensajeEstado.className = 'mensaje-estado mensaje-info';
 
     const formulario = e.target;
+    // FormData automáticamente agarra los inputs "latitude" y "longitude" del HTML
     const paqueteDeDatos = new FormData(formulario);
 
     try {

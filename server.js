@@ -100,7 +100,8 @@ const configuracionSubida = upload.fields([
 ]);
 
 app.post('/api/propiedades', verificarToken, configuracionSubida, (req, res) => {
-    const { title, price, location, bedrooms, bathroom, meters, tour, description } = req.body;
+    // --- CAMBIO: Atrapamos latitude y longitude ---
+    const { title, price, location, bedrooms, bathroom, meters, tour, description, latitude, longitude } = req.body;
 
     const fotoPrincipal = req.files['foto_principal'] ? req.files['foto_principal'][0] : null;
     const imagePath = fotoPrincipal ? 'uploads/' + fotoPrincipal.filename : '';
@@ -121,8 +122,10 @@ app.post('/api/propiedades', verificarToken, configuracionSubida, (req, res) => 
         });
     }
     
-    const consultaSQL = `INSERT INTO propiedades (title, price, location, bedrooms, bathroom, meters, description, image, photo_360, galery, tour) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-    const valores = [title, price, location, bedrooms, bathroom, meters, description, imagePath, JSON.stringify(photo360Paths), JSON.stringify(galeryPaths), tour];
+    // --- CAMBIO: Agregamos latitude y longitude a la consulta SQL ---
+    const consultaSQL = `INSERT INTO propiedades (title, price, location, bedrooms, bathroom, meters, description, image, photo_360, galery, tour, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    // Si la coordenada viene vacía, le guardamos null para que la BD no se queje
+    const valores = [title, price, location, bedrooms, bathroom, meters, description, imagePath, JSON.stringify(photo360Paths), JSON.stringify(galeryPaths), tour, latitude || null, longitude || null];
 
     conexion.query(consultaSQL, valores, (error) => {
         if (error) {
@@ -135,14 +138,16 @@ app.post('/api/propiedades', verificarToken, configuracionSubida, (req, res) => 
 
 app.put('/api/propiedades/:id', verificarToken, (req, res) => {
     const idPropiedad = req.params.id;
-    const { title, price, location, bedrooms, bathroom, meters, description } = req.body;
+    // --- CAMBIO: Atrapamos latitude y longitude ---
+    const { title, price, location, bedrooms, bathroom, meters, description, latitude, longitude } = req.body;
 
+    // --- CAMBIO: Agregamos latitude y longitude al UPDATE ---
     const consultaSQL = `
         UPDATE propiedades 
-        SET title = ?, price = ?, location = ?, bedrooms = ?, bathroom = ?, meters = ?, description = ?
+        SET title = ?, price = ?, location = ?, bedrooms = ?, bathroom = ?, meters = ?, description = ?, latitude = ?, longitude = ?
         WHERE id = ?
     `;
-    const valores = [title, price, location, bedrooms, bathroom, meters, description, idPropiedad];
+    const valores = [title, price, location, bedrooms, bathroom, meters, description, latitude || null, longitude || null, idPropiedad];
 
     conexion.query(consultaSQL, valores, (error) => {
         if (error) {
@@ -193,29 +198,25 @@ app.delete('/api/propiedades/:id', verificarToken, (req, res) => {
     });
 });
 
-// --- NUEVA RUTA: ENVIAR EMAILS ---
 app.post('/api/contacto', async (req, res) => {
     const { nombre, telefono, email, mensaje } = req.body;
 
-    // 1. Configuramos el cartero con tu cuenta oficial
     const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
             user: 'marbaspropiedades@gmail.com',
-            pass: 'vdktnysxrnruodfg' //codigo de aplicacion
+            pass: 'vdktnysxrnruodfg' 
         }
     });
 
-    // 2. Armamos la carta
     const mailOptions = {
         from: '"Web Marbas" <marbaspropiedades@gmail.com>', 
-        to: 'marbaspropiedades@gmail.com', // Aterriza en el mismo buzón
+        to: 'marbaspropiedades@gmail.com', 
         replyTo: email, 
         subject: `Nueva consulta de ${nombre}`,
         text: `Datos del contacto:\n\nNombre: ${nombre}\nTeléfono: ${telefono}\nEmail: ${email}\n\nMensaje:\n${mensaje}`
     };
 
-    // 3. Enviamos
     try {
         await transporter.sendMail(mailOptions);
         res.status(200).json({ mensaje: '¡Correo enviado con éxito!' });

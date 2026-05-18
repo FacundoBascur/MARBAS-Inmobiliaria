@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalle - Marbas Propiedades</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/photoswipe@5.4.3/dist/photoswipe.css">
+    
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/detalle.css">
     <link rel="icon" type="image/x-icon" href="imagenes/MARBAS.ico">
@@ -25,6 +28,7 @@
             <a href="index.html">Inicio</a>
             <a href="index.html#catalogo">En venta</a>
             <a href="#div-detalle-descripcion">Descripción</a>
+            <a href="#div-detalle-ubicacion">Ubicación</a>
             <a href="#contact-detalle">Contacto</a>
         </nav>
     </header>
@@ -76,6 +80,11 @@
             <p id="detalle-descripcion">Cargando descripción...</p>
         </div>
 
+        <section class="propiedad-mapa" id="div-detalle-ubicacion">
+            <h2>Ubicación de la propiedad</h2>
+            <div id="mapa-propiedad"></div>
+        </section>
+
         <div class="property-contact" id="contact-detalle">
             <h3>Consultar por esta propiedad</h3>
             <form id="form-consulta-detalle">
@@ -116,6 +125,7 @@
                 <a href="index.html#inicio">Inicio</a>
                 <a href="index.html#catalogo">Propiedades</a>
                 <a href="#div-detalle-descripcion">Descripción</a>
+                <a href="#div-detalle-ubicacion">Ubicación</a>
                 <a href="#contact-detalle">Contacto</a>
             </div>
         </div>
@@ -125,6 +135,11 @@
     </footer>
 
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+    
+    <script src="https://unpkg.com/photoswipe@5.4.3/dist/umd/photoswipe.umd.min.js"></script>
+    <script src="https://unpkg.com/photoswipe@5.4.3/dist/umd/photoswipe-lightbox.umd.min.js"></script>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="js/detalle.js"></script>
 </body>
 </html>

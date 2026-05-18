@@ -2,7 +2,9 @@ const URL_BASE = "http://localhost:3000/";
 const parametros = new URLSearchParams(window.location.search);
 const idCasa = parseInt(parametros.get('id'));
 
-// Menú Hamburguesa
+let itemsGallery = []; 
+let currentPhotoIndex = 0; 
+
 document.getElementById('mobile-menu-btn').addEventListener('click', () => {
     document.getElementById('main-menu').classList.toggle('active');
 });
@@ -16,21 +18,36 @@ async function cargarDetalle() {
         if (casa) {
             const precioFormateado = new Intl.NumberFormat('es-AR').format(casa.price);
 
-            // Llenar datos de texto
             document.getElementById('detalle-titulo').innerText = casa.title;
             document.getElementById('detalle-ubicacion').innerText = casa.location;
             document.getElementById('detalle-precio').innerText = "USD " + precioFormateado;
             document.getElementById('detalle-dorm').innerText = casa.bedrooms;
             document.getElementById('detalle-banos').innerText = casa.bathroom;
             document.getElementById('detalle-metros').innerText = casa.meters;
-            
-            // --- CAMBIO: Pegamos la descripción en el HTML ---
             document.getElementById('detalle-descripcion').innerText = casa.description || "Sin descripción disponible.";
 
             const wppTexto = `Hola Marbas Propiedades! Me interesa la propiedad: ${casa.title} (USD ${precioFormateado})`;
             document.getElementById('detalle-whatsapp').href = `https://wa.me/2984897012?text=${encodeURIComponent(wppTexto)}`;
 
-            // --- 1. LÓGICA DE UNIFICAR GALERÍA NORMAL ---
+            // LÓGICA DEL MAPA (Leaflet)
+            const mapContainer = document.getElementById('mapa-propiedad');
+            if (mapContainer) {
+                // Usamos las coordenadas de la base de datos. Si están vacías, default a Roca.
+                const lat = casa.latitude || -39.0275;
+                const lng = casa.longitude || -67.5804;
+
+                const mapa = L.map('mapa-propiedad').setView([lat, lng], 15);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap'
+                }).addTo(mapa);
+
+                L.marker([lat, lng]).addTo(mapa)
+                    .bindPopup(`<b>Propiedad: ${casa.title}</b><br>Ubicación aproximada.`)
+                    .openPopup();
+            }
+
+            // --- 1. UNIFICAR GALERÍA ---
             let galeriaArray = [];
             if (casa.image) galeriaArray.push(casa.image);
             
@@ -38,19 +55,17 @@ async function cargarDetalle() {
                 const fotosExtra = typeof casa.galery === 'string' ? JSON.parse(casa.galery) : casa.galery;
                 galeriaArray = galeriaArray.concat(fotosExtra);
             }
-
             galeriaArray = [...new Set(galeriaArray)];
 
-            // --- 2. FUNCIONAMIENTO DE LA GALERÍA NORMAL ---
+            // --- 2. GALERÍA Y PHOTOSWIPE ---
             const fotoPrincipal = document.getElementById('foto-principal');
             const tiraMiniaturas = document.getElementById('tira-miniaturas');
             const btnPrev = document.getElementById('btn-prev');
             const btnNext = document.getElementById('btn-next');
-            let fotoActualIndex = 0;
 
             function actualizarGaleria(index) {
-                let ruta = galeriaArray[index];
-                fotoPrincipal.src = URL_BASE + ruta;
+                currentPhotoIndex = index;
+                fotoPrincipal.src = URL_BASE + galeriaArray[index];
                 
                 document.querySelectorAll('#tira-miniaturas img').forEach(img => img.classList.remove('activa'));
                 const miniaturas = document.querySelectorAll('#tira-miniaturas img');
@@ -58,6 +73,12 @@ async function cargarDetalle() {
             }
 
             if (galeriaArray.length > 0) {
+                itemsGallery = galeriaArray.map(ruta => ({
+                    src: URL_BASE + ruta,
+                    w: 1920, 
+                    h: 1080 
+                }));
+
                 actualizarGaleria(0);
 
                 if (galeriaArray.length > 1) {
@@ -70,25 +91,53 @@ async function cargarDetalle() {
                     const imgMini = document.createElement('img');
                     imgMini.src = URL_BASE + fotoUrl;
                     if (index === 0) imgMini.classList.add('activa');
-                    imgMini.addEventListener('click', () => {
-                        fotoActualIndex = index;
-                        actualizarGaleria(fotoActualIndex);
-                    });
+                    imgMini.addEventListener('click', () => actualizarGaleria(index));
                     tiraMiniaturas.appendChild(imgMini);
                 });
 
                 btnPrev.addEventListener('click', () => {
-                    fotoActualIndex = (fotoActualIndex > 0) ? fotoActualIndex - 1 : galeriaArray.length - 1;
-                    actualizarGaleria(fotoActualIndex);
+                    const prevIndex = (currentPhotoIndex > 0) ? currentPhotoIndex - 1 : galeriaArray.length - 1;
+                    actualizarGaleria(prevIndex);
                 });
 
                 btnNext.addEventListener('click', () => {
-                    fotoActualIndex = (fotoActualIndex < galeriaArray.length - 1) ? fotoActualIndex + 1 : 0;
-                    actualizarGaleria(fotoActualIndex);
+                    const nextIndex = (currentPhotoIndex < galeriaArray.length - 1) ? currentPhotoIndex + 1 : 0;
+                    actualizarGaleria(nextIndex);
                 });
+
+                // Lógica PhotoSwipe
+                const fotoPrincipalWrapper = document.querySelector('.foto-principal-wrapper');
+                if (fotoPrincipalWrapper) {
+                    const lightbox = new PhotoSwipeLightbox({
+                        pswpModule: PhotoSwipe,
+                        bgOpacity: 0.9,
+                        loop: true,
+                        arrowPrev: false,
+                        arrowNext: false
+                    });
+
+                    lightbox.on('beforeOpen', () => document.documentElement.style.overflow = 'hidden');
+                    lightbox.on('close', () => document.documentElement.style.overflow = '');
+
+                    lightbox.init();
+
+                    fotoPrincipalWrapper.addEventListener('click', (e) => {
+                        if (e.target.id === 'btn-prev' || e.target.id === 'btn-next') return;
+
+                        const miniaturasDom = document.querySelectorAll('#tira-miniaturas img');
+                        itemsGallery.forEach((item, index) => {
+                            if (miniaturasDom[index] && miniaturasDom[index].naturalWidth > 0) {
+                                item.w = miniaturasDom[index].naturalWidth;
+                                item.h = miniaturasDom[index].naturalHeight;
+                            }
+                        });
+
+                        lightbox.loadAndOpen(currentPhotoIndex, itemsGallery);
+                    });
+                }
             }
 
-            // --- 3. NUEVA LÓGICA DE TOUR 360 MULTIPLE ---
+            // --- 3. TOUR 360 ---
             const btnFotos = document.getElementById('btn-fotos');
             const btn360 = document.getElementById('btn-360');
             const contGaleria = document.getElementById('galeria-container');
@@ -104,29 +153,17 @@ async function cargarDetalle() {
                 function extraerNombreLimpio(rutaFichero) {
                     const archivo = rutaFichero.split('/').pop(); 
                     let sinExtension = archivo.split('.')[0];     
-                    
                     const primerGuion = sinExtension.indexOf('-');
-                    if (primerGuion !== -1) {
-                        sinExtension = sinExtension.substring(primerGuion + 1); 
-                    }
-
+                    if (primerGuion !== -1) sinExtension = sinExtension.substring(primerGuion + 1); 
                     let nombreFinal = sinExtension.replace(/[0-9_-]/g, ' ').trim();
-
-                    if (nombreFinal === "") {
-                        return "Vista 360";
-                    }
-
-                    return nombreFinal;
+                    return nombreFinal === "" ? "Vista 360" : nombreFinal;
                 }
 
                 function cargarPanorama(index) {
                     const rutaFoto = casa.photo_360[index];
-                    
                     tituloOverlay.innerText = extraerNombreLimpio(rutaFoto).toUpperCase();
 
-                    if (visorPannellum) {
-                        visorPannellum.destroy();
-                    }
+                    if (visorPannellum) visorPannellum.destroy();
 
                     visorPannellum = pannellum.viewer('panorama-container', {
                         "type": "equirectangular",
@@ -147,9 +184,7 @@ async function cargarDetalle() {
                     imgMini.src = URL_BASE + ruta; 
                     if (index === 0) imgMini.classList.add('activa');
                     
-                    imgMini.addEventListener('click', () => {
-                        cargarPanorama(index);
-                    });
+                    imgMini.addEventListener('click', () => cargarPanorama(index));
                     tira360.appendChild(imgMini);
                 });
 
@@ -161,9 +196,7 @@ async function cargarDetalle() {
                     wrapper360.style.display = 'flex'; 
                     instruccion.style.display = 'block';
 
-                    if (!visorPannellum) {
-                        cargarPanorama(0); 
-                    }
+                    if (!visorPannellum) cargarPanorama(0); 
                 });
 
                 btnFotos.addEventListener('click', () => {
@@ -187,21 +220,17 @@ async function cargarDetalle() {
 
 cargarDetalle();
 
-// --- ENVIAR FORMULARIO DE CONSULTA EN DETALLE ---
+// --- 4. FORMULARIO DE CONSULTA ---
 const formConsultaDetalle = document.getElementById('form-consulta-detalle');
 
 if (formConsultaDetalle) {
     formConsultaDetalle.addEventListener('submit', async (e) => {
-        // 1. Evitamos que la página se recargue de golpe y se rompa
         e.preventDefault(); 
         
         const mensajeRespuesta = document.getElementById('consulta-mensaje-estado');
         const botonEnviar = formConsultaDetalle.querySelector('.btn-submit');
-        
-        // Capturamos el título de la casa para saber por cuál preguntan
         const tituloPropiedad = document.getElementById('detalle-titulo').innerText;
 
-        // Avisamos al usuario y bloqueamos el botón para evitar spam
         mensajeRespuesta.innerText = "Enviando mensaje, por favor esperá...";
         mensajeRespuesta.style.color = "var(--primary-blue)";
         mensajeRespuesta.classList.remove('oculto');
@@ -209,11 +238,9 @@ if (formConsultaDetalle) {
         botonEnviar.disabled = true;
         botonEnviar.innerText = "Enviando...";
 
-        // Juntamos el título de la casa con el mensaje que escribió el cliente
         const textoCliente = document.getElementById('consulta-mensaje').value;
         const mensajeFinal = `Consulta por la propiedad: ${tituloPropiedad}\n\n${textoCliente}`;
 
-        // Armamos los 4 datos
         const datos = {
             nombre: document.getElementById('consulta-nombre').value,
             telefono: document.getElementById('consulta-telefono').value,
@@ -241,7 +268,6 @@ if (formConsultaDetalle) {
             mensajeRespuesta.innerText = "Error de conexión con el servidor.";
             mensajeRespuesta.style.color = "red";
         } finally {
-            // Habilitamos el botón de nuevo
             botonEnviar.disabled = false;
             botonEnviar.innerText = "Enviar Consulta";
         }
