@@ -1,186 +1,248 @@
-// --- 1. SEGURIDAD ---
+const URL_BASE = "http://localhost:3000/";
+const API_BASE_URL = `${URL_BASE}api`;
 const token = localStorage.getItem('tokenMarbas');
-if (!token) window.location.href = 'login.html';
 
-document.getElementById('btn-logout').addEventListener('click', (e) => {
-    e.preventDefault();
-    localStorage.removeItem('tokenMarbas'); 
-    window.location.href = 'login.html'; 
+if (!token) {
+    window.location.href = 'login.html';
+}
+
+function getById(id) {
+    return document.getElementById(id);
+}
+
+document.getElementById('mobile-menu-btn')?.addEventListener('click', () => {
+    document.getElementById('main-menu')?.classList.toggle('active');
 });
 
-// --- 2. TOUR 360 DINÁMICO ---
-const selectTour = document.getElementById('select-tour');
-const container360 = document.getElementById('container-360');
-const input360 = document.getElementById('input-360');
+function parseJsonResponse(response) {
+    return response.text().then(text => {
+        try {
+            return text ? JSON.parse(text) : null;
+        } catch (err) {
+            return null;
+        }
+    });
+}
 
-selectTour.addEventListener('change', (e) => {
-    if (e.target.value === "1") {
-        container360.classList.remove('oculto');
-        input360.required = true;
+function handleUnauthorized() {
+    localStorage.removeItem('tokenMarbas');
+    alert('La sesión expiró o no está autorizada. Volviendo al login.');
+    window.location.href = 'login.html';
+}
+
+function setStatusMessage(text, className) {
+    const mensajeEstado = getById('mensaje-estado');
+    if (!mensajeEstado) return;
+    mensajeEstado.textContent = text;
+    mensajeEstado.className = className;
+}
+
+async function fetchWithAuth(path, options = {}) {
+    const headers = options.headers ? { ...options.headers } : {};
+    headers.Authorization = `Bearer ${token}`;
+
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+        ...options,
+        headers
+    });
+
+    const body = await parseJsonResponse(response);
+
+    if (response.status === 401) {
+        handleUnauthorized();
+        throw new Error('No autorizado');
+    }
+
+    if (!response.ok) {
+        throw new Error(body?.error || body?.message || 'Error en la petición');
+    }
+
+    return body;
+}
+
+const btnLogout = getById('btn-logout');
+btnLogout?.addEventListener('click', (e) => {
+    e.preventDefault();
+    localStorage.removeItem('tokenMarbas');
+    window.location.href = 'login.html';
+});
+
+const selectTour = getById('select-tour');
+const container360 = getById('container-360');
+const input360 = getById('input-360');
+
+selectTour?.addEventListener('change', (e) => {
+    if (e.target.value === '1') {
+        container360?.classList.remove('oculto');
+        if (input360) input360.required = true;
     } else {
-        container360.classList.add('oculto');
-        input360.required = false;
-        input360.value = ""; 
+        container360?.classList.add('oculto');
+        if (input360) {
+            input360.required = false;
+            input360.value = '';
+        }
     }
 });
 
-// --- 3. CARGAR TABLA DE PROPIEDADES ---
-let propiedadesGlobales = []; 
+let propiedadesGlobales = [];
+
+function buildPropertyRow(prop) {
+    const tr = document.createElement('tr');
+
+    const tdId = document.createElement('td');
+    tdId.innerHTML = `<strong>#${prop.id}</strong>`;
+
+    const tdTitle = document.createElement('td');
+    tdTitle.textContent = prop.title;
+
+    const tdPrice = document.createElement('td');
+    tdPrice.textContent = `USD ${new Intl.NumberFormat('es-AR').format(prop.price)}`;
+
+    const tdActions = document.createElement('td');
+    tdActions.className = 'acciones-cell';
+
+    const editar = document.createElement('button');
+    editar.className = 'btn-editar';
+    editar.textContent = 'Editar';
+    editar.type = 'button';
+    editar.addEventListener('click', () => abrirModalEditar(prop.id));
+
+    const eliminar = document.createElement('button');
+    eliminar.className = 'btn-eliminar';
+    eliminar.textContent = 'Eliminar';
+    eliminar.type = 'button';
+    eliminar.addEventListener('click', () => eliminarPropiedad(prop.id));
+
+    tdActions.append(editar, eliminar);
+    tr.append(tdId, tdTitle, tdPrice, tdActions);
+    return tr;
+}
 
 async function cargarListaPropiedades() {
+    const tbody = getById('tbody-propiedades');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
     try {
-        const respuesta = await fetch('http://localhost:3000/api/propiedades');
-        const propiedades = await respuesta.json();
-        propiedadesGlobales = propiedades; 
-        const tbody = document.getElementById('tbody-propiedades');
-        
-        tbody.innerHTML = ''; 
-        
-        if (propiedades.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center">No hay propiedades cargadas.</td></tr>';
+        const propiedades = await fetchWithAuth('/propiedades');
+        propiedadesGlobales = Array.isArray(propiedades) ? propiedades : [];
+
+        if (propiedadesGlobales.length === 0) {
+            const fila = document.createElement('tr');
+            fila.innerHTML = '<td colspan="4" class="text-center">No hay propiedades cargadas.</td>';
+            tbody.appendChild(fila);
             return;
         }
 
-        propiedades.forEach(prop => {
-            const precioFmt = new Intl.NumberFormat('es-AR').format(prop.price);
-            tbody.innerHTML += `
-                <tr>
-                    <td><strong>#${prop.id}</strong></td>
-                    <td>${prop.title}</td>
-                    <td>USD ${precioFmt}</td>
-                    <td class="acciones-cell">
-                        <button onclick="abrirModalEditar(${prop.id})" class="btn-editar">Editar</button>
-                        <button onclick="eliminarPropiedad(${prop.id})" class="btn-eliminar">Eliminar</button>
-                    </td>
-                </tr>
-            `;
-        });
+        const fragment = document.createDocumentFragment();
+        propiedadesGlobales.forEach(prop => fragment.appendChild(buildPropertyRow(prop)));
+        tbody.appendChild(fragment);
     } catch (error) {
-        console.error("Error cargando tabla:", error);
+        console.error('Error cargando tabla:', error);
+        const fila = document.createElement('tr');
+        fila.innerHTML = '<td colspan="4" class="text-center">Error al cargar propiedades.</td>';
+        tbody.appendChild(fila);
     }
 }
 
-// --- 4. FUNCIONES DE EDICIÓN (MODAL) ---
 function abrirModalEditar(id) {
     const casa = propiedadesGlobales.find(p => p.id === id);
-    
-    if(casa) {
-        document.getElementById('edit-id').value = casa.id;
-        document.getElementById('edit-title').value = casa.title;
-        document.getElementById('edit-price').value = casa.price;
-        document.getElementById('edit-location').value = casa.location;
-        document.getElementById('edit-bedrooms').value = casa.bedrooms;
-        document.getElementById('edit-bathroom').value = casa.bathroom;
-        document.getElementById('edit-meters').value = casa.meters;
-        document.getElementById('edit-description').value = casa.description || '';
-        
-        // --- NUEVO: Cargamos las coordenadas en el modal si existen ---
-        if(document.getElementById('edit-latitude')) document.getElementById('edit-latitude').value = casa.latitude || '';
-        if(document.getElementById('edit-longitude')) document.getElementById('edit-longitude').value = casa.longitude || '';
+    if (!casa) return;
 
-        document.getElementById('modal-editar').classList.remove('oculto');
-    }
+    getById('edit-id').value = casa.id;
+    getById('edit-title').value = casa.title;
+    getById('edit-price').value = casa.price;
+    getById('edit-location').value = casa.location;
+    getById('edit-bedrooms').value = casa.bedrooms;
+    getById('edit-bathroom').value = casa.bathroom;
+    getById('edit-meters').value = casa.meters;
+    getById('edit-description').value = casa.description || '';
+
+    const latitudeInput = getById('edit-latitude');
+    const longitudeInput = getById('edit-longitude');
+    if (latitudeInput) latitudeInput.value = casa.latitude || '';
+    if (longitudeInput) longitudeInput.value = casa.longitude || '';
+
+    getById('modal-editar')?.classList.remove('oculto');
 }
 
 function cerrarModal() {
-    document.getElementById('modal-editar').classList.add('oculto');
+    getById('modal-editar')?.classList.add('oculto');
 }
 
 async function guardarEdicion() {
-    const idPropiedad = document.getElementById('edit-id').value;
-    
+    const idPropiedad = getById('edit-id')?.value;
+    if (!idPropiedad) return;
+
     const datosNuevos = {
-        title: document.getElementById('edit-title').value,
-        price: document.getElementById('edit-price').value,
-        location: document.getElementById('edit-location').value,
-        bedrooms: document.getElementById('edit-bedrooms').value,
-        bathroom: document.getElementById('edit-bathroom').value,
-        meters: document.getElementById('edit-meters').value,
-        description: document.getElementById('edit-description').value,
-        // --- NUEVO: Atrapamos las coordenadas al guardar ---
-        latitude: document.getElementById('edit-latitude') ? document.getElementById('edit-latitude').value : null,
-        longitude: document.getElementById('edit-longitude') ? document.getElementById('edit-longitude').value : null
+        title: getById('edit-title')?.value || '',
+        price: parseFloat(getById('edit-price')?.value) || 0,
+        location: getById('edit-location')?.value || '',
+        bedrooms: parseInt(getById('edit-bedrooms')?.value) || 0,
+        bathroom: parseInt(getById('edit-bathroom')?.value) || 0,
+        meters: parseFloat(getById('edit-meters')?.value) || 0,
+        description: getById('edit-description')?.value || '',
+        latitude: getById('edit-latitude')?.value || null,
+        longitude: getById('edit-longitude')?.value || null
     };
 
     try {
-        const respuesta = await fetch(`http://localhost:3000/api/propiedades/${idPropiedad}`, {
+        await fetchWithAuth(`/propiedades/${idPropiedad}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datosNuevos)
         });
 
-        if (respuesta.ok) {
-            alert('¡Propiedad actualizada!');
-            cerrarModal();
-            cargarListaPropiedades(); 
-        } else {
-            alert('Error al actualizar la propiedad.');
-        }
+        alert('¡Propiedad actualizada!');
+        cerrarModal();
+        cargarListaPropiedades();
     } catch (error) {
-        console.error("Error al actualizar:", error);
-        alert('Fallo de conexión con el servidor.');
+        console.error('Error al actualizar:', error);
+        alert('Error al actualizar la propiedad.');
     }
 }
 
-// --- 5. FUNCIÓN PARA ELIMINAR ---
 async function eliminarPropiedad(id) {
-    if (!confirm('¿Estás seguro de que querés borrar esta propiedad y sus fotos?')) return; 
+    if (!confirm('¿Estás seguro de que querés borrar esta propiedad y sus fotos?')) return;
 
     try {
-        const respuesta = await fetch(`http://localhost:3000/api/propiedades/${id}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': 'Bearer ' + token }
+        await fetchWithAuth(`/propiedades/${id}`, {
+            method: 'DELETE'
         });
 
-        if (respuesta.ok) {
-            alert('¡Propiedad eliminada!');
-            cargarListaPropiedades(); 
-        } else {
-            alert('Error al intentar eliminar.');
-        }
+        alert('¡Propiedad eliminada!');
+        cargarListaPropiedades();
     } catch (error) {
-        console.error("Error al eliminar:", error);
-        alert('Fallo de conexión con el servidor.');
+        console.error('Error al eliminar:', error);
+        alert('Error al intentar eliminar.');
     }
 }
 
-// --- 6. SUBIR PROPIEDAD ---
-document.getElementById('form-admin').addEventListener('submit', async (e) => {
-    e.preventDefault(); 
-    
-    const mensajeEstado = document.getElementById('mensaje-estado');
-    mensajeEstado.innerText = "Subiendo archivos, por favor esperá...";
-    mensajeEstado.className = 'mensaje-estado mensaje-info';
+const formAdmin = getById('form-admin');
+if (formAdmin) {
+    formAdmin.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    const formulario = e.target;
-    // FormData automáticamente agarra los inputs "latitude" y "longitude" del HTML
-    const paqueteDeDatos = new FormData(formulario);
+        setStatusMessage('Subiendo archivos, por favor esperá...', 'mensaje-estado mensaje-info');
 
-    try {
-        const respuesta = await fetch('http://localhost:3000/api/propiedades', {
-            method: 'POST', 
-            headers: { 'Authorization': 'Bearer ' + token },
-            body: paqueteDeDatos
-        });
+        const paqueteDeDatos = new FormData(formAdmin);
 
-        if (respuesta.ok) {
-            mensajeEstado.innerText = "¡Propiedad cargada con éxito!";
-            mensajeEstado.className = 'mensaje-estado mensaje-exito';
-            formulario.reset(); 
-            document.getElementById('container-360').classList.add('oculto'); 
-            cargarListaPropiedades(); 
-        } else {
-            mensajeEstado.innerText = "Error al cargar la propiedad.";
-            mensajeEstado.className = 'mensaje-estado mensaje-error';
+        try {
+            await fetchWithAuth('/propiedades', {
+                method: 'POST',
+                body: paqueteDeDatos
+            });
+
+            setStatusMessage('¡Propiedad cargada con éxito!', 'mensaje-estado mensaje-exito');
+            formAdmin.reset();
+            container360?.classList.add('oculto');
+            cargarListaPropiedades();
+        } catch (error) {
+            console.error(error);
+            setStatusMessage('Error al cargar la propiedad.', 'mensaje-estado mensaje-error');
         }
-    } catch (error) {
-        console.error(error);
-        mensajeEstado.innerText = "Error de conexión con el servidor Node.";
-        mensajeEstado.className = 'mensaje-estado mensaje-error';
-    }
-});
+    });
+}
 
 cargarListaPropiedades();

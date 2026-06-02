@@ -1,45 +1,65 @@
-document.getElementById('form-login').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const mensaje = document.getElementById('mensaje-login');
-            mensaje.innerText = "Verificando credenciales...";
-            mensaje.style.color = "var(--primary-blue)";
+const API_BASE_URL = "http://localhost:3000/api";
+const loginForm = document.getElementById('form-login');
+const mensajeLogin = document.getElementById('mensaje-login');
 
-            const usuario = e.target.usuario.value;
-            const password = e.target.password.value;
+function setLoginMessage(text, color) {
+    if (!mensajeLogin) return;
+    mensajeLogin.textContent = text;
+    mensajeLogin.style.color = color;
+}
 
-            try {
-                const respuesta = await fetch('http://localhost:3000/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ usuario, password })
-                });
+async function fetchJson(url, options = {}) {
+    const response = await fetch(url, options);
+    const text = await response.text();
+    let body = null;
 
-                if (respuesta.ok) 
-                {
-                        const datos = await respuesta.json();
-                        localStorage.setItem('tokenMarbas', datos.token);
-                        
-                        mensaje.innerText = "¡Acceso concedido! Entrando...";
-                        mensaje.style.color = "green";
+    try {
+        body = text ? JSON.parse(text) : null;
+    } catch (err) {
+        body = null;
+    }
 
-                        // 1. Le decimos al body que cualquier cambio de opacidad sea suave
-                        document.body.style.transition = "opacity 0.5s ease";
-                        // 2. Volvemos la pantalla transparente
-                        document.body.style.opacity = "0";
+    if (!response.ok) {
+        const error = body?.error || body?.message || response.statusText;
+        throw new Error(error);
+    }
 
-                        // 3. Esperamos medio segundo (500 milisegundos) a que termine el efecto y ahí cambiamos de página
-                        setTimeout(() => {
-                            window.location.href = 'admin.html';
-                        }, 500);
-                        
-                    } else {
-                        mensaje.innerText = "Usuario o contraseña incorrectos.";
-                        mensaje.style.color = "red";
-                }
-            } catch (error) {
-                console.error(error);
-                mensaje.innerText = "Error de conexión con el servidor.";
-                mensaje.style.color = "red";
-            }
-        });
+    return body;
+}
+
+if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const usuario = e.target.usuario.value.trim();
+        const password = e.target.password.value.trim();
+
+        if (!usuario || !password) {
+            setLoginMessage('Completá usuario y contraseña antes de continuar.', 'red');
+            return;
+        }
+
+        setLoginMessage('Verificando credenciales...', 'var(--primary-blue)');
+
+        try {
+            const datos = await fetchJson(`${API_BASE_URL}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuario, password })
+            });
+
+            localStorage.setItem('tokenMarbas', datos.token);
+            setLoginMessage('¡Acceso concedido! Entrando...', 'green');
+
+            document.body.style.transition = 'opacity 0.5s ease';
+            document.body.style.opacity = '0';
+
+            setTimeout(() => {
+                window.location.href = 'admin.html';
+            }, 500);
+        } catch (error) {
+            console.error(error);
+            setLoginMessage(error.message || 'Usuario o contraseña incorrectos.', 'red');
+        }
+    });
+}
