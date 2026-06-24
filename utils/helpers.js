@@ -1,0 +1,28 @@
+const validator = require('validator');
+const fs = require('fs').promises;
+const path = require('path');
+
+const validarEmail = (email) => validator.isEmail(email);
+
+const sanitizar = (text) => {
+    if (!text) return '';
+    return validator.trim(validator.stripLow(text)).substring(0, 1000);
+};
+
+async function eliminarArchivos(rutas) {
+    for (const ruta of rutas) {
+        if (!ruta) continue;
+        try {
+
+            await fs.unlink(path.resolve(__dirname, '../', ruta.replace(/\\/g, '/')));
+        } catch (e) {
+
+        }
+    }
+}
+
+module.exports = {
+    validarEmail,
+    sanitizar,
+    eliminarArchivos
+};
