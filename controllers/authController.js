@@ -35,7 +35,7 @@ const login = catchAsync(async (req, res, next) => {
 
     const refreshToken = jwt.sign(
         { id: usuarioBD.id },
-        process.env.JWT_SECRET,
+        process.env.JWT_REFRESH_SECRET,
         { expiresIn: process.env.JWT_REFRESH_EXPIRE || '7d' }
     );
 
@@ -55,7 +55,7 @@ const refreshToken = catchAsync(async (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(tokenRefresco, process.env.JWT_SECRET);
+        const decoded = jwt.verify(tokenRefresco, process.env.JWT_REFRESH_SECRET);
         const newToken = jwt.sign(
             { id: decoded.id },
             process.env.JWT_SECRET,

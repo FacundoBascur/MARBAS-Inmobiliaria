@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
 const api = axios.create({
-  baseURL: 'http://localhost:3000/api', // Ajustar cuando se suba a Hostinger
+  baseURL: API_URL,
 });
 
 // Interceptor para inyectar el token en cada petición
@@ -33,7 +35,7 @@ api.interceptors.response.use(
         if (!refreshToken) throw new Error('No refresh token');
 
         // Pedir nuevo token
-        const res = await axios.post('http://localhost:3000/api/refresh-token', { refreshToken });
+        const res = await axios.post(`${API_URL}/refresh-token`, { refreshToken });
         
         const newToken = res.data.token;
         localStorage.setItem('token', newToken);

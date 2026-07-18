@@ -1,12 +1,8 @@
-const URL_BASE = "http://localhost:3000/";
-const API_BASE_URL = `${URL_BASE}api`;
-
 // -----------------------------------------------
-// MENÚ MÓVIL
+// index.js — Requiere config.js y common.js cargados previamente
 // -----------------------------------------------
-document.getElementById('mobile-menu-btn')?.addEventListener('click', () => {
-    document.getElementById('main-menu')?.classList.toggle('active');
-});
+const URL_BASE = APP_CONFIG.URL_BASE;
+const API_BASE_URL = APP_CONFIG.API_BASE_URL;
 
 // -----------------------------------------------
 // HERO SLIDESHOW
@@ -31,7 +27,7 @@ async function initHeroSlideshow() {
     }
 
     // Crear slides
-    imagenes.forEach((img, i) => {
+    imagenes.forEach((img) => {
         const slide = document.createElement('div');
         slide.className = 'hero-slide';
         slide.style.backgroundImage = `url('${URL_BASE}${img.url}')`;
@@ -40,7 +36,7 @@ async function initHeroSlideshow() {
 
     const slides = Array.from(slidesContainer.querySelectorAll('.hero-slide'));
 
-    // Iniciar la primera slide con Ken Burns
+    // Activar slide con Ken Burns
     function activarSlide(slide) {
         slide.classList.add('activa');
         // Doble rAF garantiza que el navegador pintó opacity:1 antes de iniciar el zoom
@@ -53,15 +49,13 @@ async function initHeroSlideshow() {
     function desactivarSlide(slide) {
         slide.classList.remove('activa');
         // Cuando termina el fade (1.5s), resetear scale silenciosamente
-        // desactivando temporalmente la transition de transform
         setTimeout(() => {
-            slide.style.transition = 'none';       // sin animación
-            slide.classList.remove('zoom');         // vuelve a scale(1) instantáneamente
-            // Forzar repaint, luego restaurar transition normal
+            slide.style.transition = 'none';
+            slide.classList.remove('zoom');
             requestAnimationFrame(() => requestAnimationFrame(() => {
                 slide.style.transition = '';
             }));
-        }, 1600); // un poquito más que la transition de opacity (1.5s)
+        }, 1600);
     }
 
     // Activar primera
@@ -91,49 +85,44 @@ async function initHeroSlideshow() {
         indiceActual = nuevoIndice;
         activarSlide(slides[indiceActual]);
         if (dots.length) dots[indiceActual].classList.add('activo');
+
+        // Reiniciar el contador de tiempo al cambiar manualmente
+        ultimoCambio = performance.now();
     }
 
-    // Rotar cada 6 segundos (un poco más que la duración visual del Ken Burns)
-    let intervalo = setInterval(() => irASlide((indiceActual + 1) % slides.length), 6000);
+    // ─── Timer basado en rAF (no se "congela" como setInterval) ─────────────
+    const INTERVALO_MS = 6000;
+    let ultimoCambio = performance.now();
+    let heroVisible  = true;
+    let rafId        = null;
 
-    // Pausar al hacer hover
+    function tick(ahora) {
+        if (heroVisible && ahora - ultimoCambio >= INTERVALO_MS) {
+            irASlide((indiceActual + 1) % slides.length);
+            ultimoCambio = ahora;
+        }
+        rafId = requestAnimationFrame(tick);
+    }
+
+    rafId = requestAnimationFrame(tick);
+
+    // Pausar solo cuando la sección hero sale completamente de la vista
     const heroSection = document.getElementById('inicio');
-    heroSection?.addEventListener('mouseenter', () => clearInterval(intervalo));
-    heroSection?.addEventListener('mouseleave', () => {
-        intervalo = setInterval(() => irASlide((indiceActual + 1) % slides.length), 6000);
-    });
+    if (heroSection && 'IntersectionObserver' in window) {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                heroVisible = entries[0].isIntersecting;
+                // Al volver a ser visible, resetear el timer para no saltar de inmediato
+                if (heroVisible) ultimoCambio = performance.now();
+            },
+            { threshold: 0.1 } // pausa si menos del 10% es visible
+        );
+        observer.observe(heroSection);
+    }
 }
 
 initHeroSlideshow();
 
-
-// -----------------------------------------------
-// UTILIDADES
-// -----------------------------------------------
-function setMessage(element, text, color) {
-    if (!element) return;
-    element.textContent = text;
-    element.style.color = color;
-}
-
-async function fetchJson(url, options = {}) {
-    const response = await fetch(url, options);
-    const text = await response.text();
-    let body = null;
-
-    try {
-        body = text ? JSON.parse(text) : null;
-    } catch (err) {
-        body = null;
-    }
-
-    if (!response.ok) {
-        const error = body?.error || body?.message || response.statusText;
-        throw new Error(error);
-    }
-
-    return body;
-}
 
 // -----------------------------------------------
 // CONSTRUIR TARJETA (con wrapper para zoom)
@@ -148,6 +137,8 @@ function buildPropertyCard(prop) {
 
     const cardImg = document.createElement('div');
     cardImg.className = 'card-img';
+    cardImg.setAttribute('role', 'img');
+    cardImg.setAttribute('aria-label', prop.title);
     cardImg.style.backgroundImage = `url('${URL_BASE}${prop.image}')`;
 
     if (prop.tour === 1) {
@@ -157,6 +148,11 @@ function buildPropertyCard(prop) {
         imgWrapper.appendChild(badge);
     }
 
+    const badgeOp = document.createElement('span');
+    badgeOp.className = 'badge-operation';
+    badgeOp.textContent = prop.operation_type || 'En Venta';
+    imgWrapper.appendChild(badgeOp);
+
     imgWrapper.appendChild(cardImg);
 
     const cardContent = document.createElement('div');
@@ -164,7 +160,7 @@ function buildPropertyCard(prop) {
 
     const price = document.createElement('span');
     price.className = 'price';
-    price.textContent = `USD ${new Intl.NumberFormat('es-AR').format(prop.price)}`;
+    price.textContent = `${prop.currency || 'USD'} ${new Intl.NumberFormat('es-AR').format(prop.price)}`;
 
     const title = document.createElement('h3');
     title.textContent = prop.title;
@@ -207,6 +203,7 @@ function normalizar(str) {
 
 function aplicarFiltros() {
     const ubicacion = normalizar(document.getElementById('filtro-ubicacion')?.value || '');
+    const operacion = document.getElementById('filtro-operacion')?.value || '';
     const precioMin = parseFloat(document.getElementById('filtro-precio-min')?.value) || 0;
     const precioMax = parseFloat(document.getElementById('filtro-precio-max')?.value) || Infinity;
 
@@ -214,8 +211,9 @@ function aplicarFiltros() {
         const matchUbicacion = !ubicacion ||
             normalizar(prop.location).includes(ubicacion) ||
             normalizar(prop.title).includes(ubicacion);
+        const matchOperacion = !operacion || prop.operation_type === operacion;
         const matchPrecio = prop.price >= precioMin && prop.price <= precioMax;
-        return matchUbicacion && matchPrecio;
+        return matchUbicacion && matchOperacion && matchPrecio;
     });
 
     renderPropiedades(filtradas);
@@ -233,7 +231,13 @@ function renderPropiedades(lista) {
     }
 
     const fragment = document.createDocumentFragment();
-    lista.forEach(prop => fragment.appendChild(buildPropertyCard(prop)));
+    lista.forEach((prop, index) => {
+        const card = buildPropertyCard(prop);
+        // Animación escalonada de entrada
+        card.style.animationDelay = `${index * 0.08}s`;
+        card.classList.add('card-enter');
+        fragment.appendChild(card);
+    });
     contenedor.appendChild(fragment);
 }
 
@@ -313,4 +317,3 @@ if (formContacto) {
         }
     });
 }
-

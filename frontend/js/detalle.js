@@ -1,56 +1,13 @@
-const URL_BASE = "http://localhost:3000/";
-const API_BASE_URL = `${URL_BASE}api`;
+// -----------------------------------------------
+// detalle.js — Requiere config.js y common.js cargados previamente
+// -----------------------------------------------
+const URL_BASE = APP_CONFIG.URL_BASE;
+const API_BASE_URL = APP_CONFIG.API_BASE_URL;
 const parametros = new URLSearchParams(window.location.search);
 const idCasa = parseInt(parametros.get('id'));
 
 let itemsGallery = [];
 let currentPhotoIndex = 0;
-
-function getById(id) {
-    return document.getElementById(id);
-}
-
-function setText(id, value) {
-    const element = getById(id);
-    if (element) {
-        element.textContent = value;
-    }
-}
-
-function safeJsonParse(value, fallback = []) {
-    if (Array.isArray(value)) return value;
-    if (typeof value !== 'string') return fallback;
-
-    try {
-        const parsed = JSON.parse(value);
-        return Array.isArray(parsed) ? parsed : [value];
-    } catch (err) {
-        return [value];
-    }
-}
-
-async function fetchJson(url, options = {}) {
-    const response = await fetch(url, options);
-    const text = await response.text();
-    let body = null;
-
-    try {
-        body = text ? JSON.parse(text) : null;
-    } catch (err) {
-        body = null;
-    }
-
-    if (!response.ok) {
-        const error = body?.error || body?.message || response.statusText;
-        throw new Error(error);
-    }
-
-    return body;
-}
-
-document.getElementById('mobile-menu-btn')?.addEventListener('click', () => {
-    document.getElementById('main-menu')?.classList.toggle('active');
-});
 
 async function cargarDetalle() {
     if (!idCasa) {
@@ -59,8 +16,8 @@ async function cargarDetalle() {
     }
 
     try {
-        const propiedadesBD = await fetchJson(`${API_BASE_URL}/propiedades`);
-        const casa = Array.isArray(propiedadesBD) ? propiedadesBD.find(p => p.id === idCasa) : null;
+        // Usar endpoint individual en vez de descargar todas
+        const casa = await fetchJson(`${API_BASE_URL}/propiedades/${idCasa}`);
 
         if (!casa) {
             setText('detalle-titulo', 'Propiedad no encontrada');
@@ -69,18 +26,79 @@ async function cargarDetalle() {
 
         const precioFormateado = new Intl.NumberFormat('es-AR').format(casa.price);
 
+        // Actualizar título de la página dinámicamente
+        document.title = `${casa.title} - Marbas Propiedades`;
+        const metaDesc = document.querySelector('meta[name="description"]');
+        if (metaDesc) {
+            metaDesc.content = `${casa.title} en ${casa.location}. ${casa.currency || 'USD'} ${precioFormateado}. Marbas Propiedades - General Roca, Río Negro.`;
+        }
+
         setText('detalle-titulo', casa.title);
         setText('detalle-ubicacion', casa.location);
-        setText('detalle-precio', `USD ${precioFormateado}`);
+        
+        const operacion = casa.operation_type ? casa.operation_type.toUpperCase() : 'EN VENTA';
+        setText('detalle-operacion', operacion);
+        
+        const moneda = casa.currency || 'USD';
+        setText('detalle-precio', `${moneda} ${precioFormateado}`);
         setText('detalle-dorm', casa.bedrooms);
         setText('detalle-banos', casa.bathroom);
         setText('detalle-metros', casa.meters);
         setText('detalle-descripcion', casa.description || 'Sin descripción disponible.');
 
         const detalleWhatsapp = getById('detalle-whatsapp');
+        const monedaWpp = casa.currency || 'USD';
         if (detalleWhatsapp) {
-            const wppTexto = `Hola Marbas Propiedades! Me interesa la propiedad: ${casa.title} (USD ${precioFormateado})`;
-            detalleWhatsapp.href = `https://wa.me/2984897012?text=${encodeURIComponent(wppTexto)}`;
+            const wppTexto = `Hola Marbas Propiedades! Me interesa la propiedad: ${casa.title} (${monedaWpp} ${precioFormateado})`;
+            detalleWhatsapp.href = `https://wa.me/542984897012?text=${encodeURIComponent(wppTexto)}`;
+        }
+
+        // Botones de compartir
+        const urlActual   = window.location.href;
+        const monedaShare = casa.currency || 'USD';
+        const tituloShare = `${casa.title} – ${monedaShare} ${precioFormateado} | Marbas Propiedades`;
+
+        const btnCopiar = getById('btn-copiar-link');
+        if (btnCopiar) {
+            btnCopiar.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(urlActual);
+                } catch {
+                    // fallback para navegadores sin clipboard API
+                    const ta = document.createElement('textarea');
+                    ta.value = urlActual;
+                    ta.style.position = 'fixed';
+                    ta.style.opacity = '0';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                }
+                const spanCopiar = btnCopiar.querySelector('span');
+                btnCopiar.classList.add('copiado');
+                if (spanCopiar) spanCopiar.textContent = '¡Copiado!';
+                setTimeout(() => {
+                    btnCopiar.classList.remove('copiado');
+                    if (spanCopiar) spanCopiar.textContent = 'Copiar enlace';
+                }, 2000);
+            });
+        }
+
+        const btnShareWpp = getById('btn-compartir-wpp');
+        if (btnShareWpp) {
+            const mensajeWpp = `Mirá esta propiedad en Marbas Propiedades:\n${casa.title} – ${monedaShare} ${precioFormateado}\n${urlActual}`;
+            btnShareWpp.addEventListener('click', () => {
+                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(mensajeWpp)}`, '_blank');
+            });
+        }
+
+        const btnShareEmail = getById('btn-compartir-email');
+        if (btnShareEmail) {
+            const asunto  = encodeURIComponent(tituloShare);
+            const cuerpo  = encodeURIComponent(`Te comparto esta propiedad de Marbas Propiedades:\n\n${casa.title}\nPrecio: ${monedaShare} ${precioFormateado}\nUbicación: ${casa.location}\n\nVer más: ${urlActual}`);
+            btnShareEmail.addEventListener('click', () => {
+                window.location.href = `mailto:?subject=${asunto}&body=${cuerpo}`;
+            });
         }
 
         const mapContainer = getById('mapa-propiedad');
@@ -139,6 +157,7 @@ async function cargarDetalle() {
             galeriaArray.forEach((fotoUrl, index) => {
                 const imgMini = document.createElement('img');
                 imgMini.src = `${URL_BASE}${fotoUrl}`;
+                imgMini.loading = 'lazy';
                 if (index === 0) imgMini.classList.add('activa');
                 imgMini.addEventListener('click', () => actualizarGaleria(index));
                 tiraMiniaturas.appendChild(imgMini);
@@ -230,6 +249,7 @@ async function cargarDetalle() {
             fotos360.forEach((ruta, index) => {
                 const imgMini = document.createElement('img');
                 imgMini.src = `${URL_BASE}${ruta}`;
+                imgMini.loading = 'lazy';
                 if (index === 0) imgMini.classList.add('activa');
                 imgMini.addEventListener('click', () => cargarPanorama(index));
                 tira360.appendChild(imgMini);

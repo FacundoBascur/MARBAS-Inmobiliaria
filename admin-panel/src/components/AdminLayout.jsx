@@ -47,7 +47,7 @@ export default function AdminLayout() {
 
         <div className="p-4 border-t border-white/10 space-y-2">
           <a
-            href="http://127.0.0.1:5501/frontend/index.html"
+            href={`${import.meta.env.VITE_UPLOADS_URL || ''}/frontend/index.html`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center space-x-3 px-4 py-3 w-full rounded-lg text-gray-300 hover:bg-[#FDC830] hover:text-[#001F3F] transition-all font-bold"

@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Trash2, Upload, ImageIcon, AlertCircle, CheckCircle } from 'lucide-react';
 
-const API_BASE = 'http://localhost:3000/api';
-const UPLOADS_BASE = 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const UPLOADS_BASE = import.meta.env.VITE_UPLOADS_URL || 'http://localhost:3000';
 
 // Leer el token directamente de localStorage
 const getToken = () => localStorage.getItem('token');
@@ -192,9 +192,8 @@ export default function HeroImages() {
         {/* Drop zone — solo visible cuando no hay archivos seleccionados */}
         {previews.length === 0 && (
           <div
-            className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all ${
-              dragOver ? 'border-[#FDC830] bg-yellow-50' : 'border-gray-200 hover:border-[#001F3F] hover:bg-gray-50'
-            }`}
+            className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all ${dragOver ? 'border-[#FDC830] bg-yellow-50' : 'border-gray-200 hover:border-[#001F3F] hover:bg-gray-50'
+              }`}
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
             onDrop={onDrop}
@@ -344,7 +343,7 @@ export default function HeroImages() {
         <div>
           <strong>¿Cómo funciona el slideshow?</strong>
           <p className="mt-1 text-blue-600">
-            Las imágenes rotan automáticamente cada 5 segundos con una transición suave. Si no hay imágenes cargadas, se usa la imagen por defecto. El slideshow se pausa al pasar el mouse por encima.
+            Las imágenes rotan automáticamente cada 5 segundos con una transición suave. Si no hay imágenes cargadas, se usa la imagen por defecto.
           </p>
         </div>
       </div>

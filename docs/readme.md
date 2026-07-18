@@ -1,304 +1,230 @@
-# Backend del sistema inmobiliario MARBAS
+# 🏢 MARBAS Propiedades - Sistema de Gestión Inmobiliaria
 
-Este repositorio contiene el backend diseñado para la plataforma web de MARBAS. El servidor está construido con Node.js y Express, y administra los recursos principales del negocio: propiedades, imágenes, tours 360, autenticación y gestión de consultas.
+![Node.js](https://img.shields.io/badge/Node.js-18.x-green?logo=node.js)
+![Express](https://img.shields.io/badge/Express-4.x-lightgrey?logo=express)
+![MySQL](https://img.shields.io/badge/MySQL-8.x-blue?logo=mysql)
+![React](https://img.shields.io/badge/React-18.x-blue?logo=react)
+![Vite](https://img.shields.io/badge/Vite-5.x-purple?logo=vite)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.x-cyan?logo=tailwindcss)
 
-La aplicación se refactorizó completamente con foco en estabilidad, seguridad y mantenibilidad. La implementación actual tiene una capa de acceso a datos basada en MySQL, manejo de archivos seguro, validación de entradas y protección contra abusos.
+Sistema integral Full-Stack diseñado para la gestión y publicación de propiedades de la inmobiliaria MARBAS (General Roca, Río Negro). 
+Este repositorio funciona como un **Monorepo** que consolida el Backend (API RESTful), el Panel de Administración (React/Vite) y el Sitio Web Público (Vanilla JS/CSS).
 
-## Tecnologías principales
+---
 
-- Node.js
-- Express
-- MySQL
-- JSON Web Tokens (JWT)
-- bcrypt
-- multer
-- nodemailer
-- helmet
-- cors
-- express-rate-limit
-- compression
+## 🏗 Arquitectura del Sistema
 
-## Arquitectura y responsabilidades
+```mermaid
+graph TD
+    Client[Sitio Web Público] -->|API REST| Node[Backend Express.js]
+    Admin[Admin Panel React] -->|API REST JWT| Node
+    Node -->|Consultas SQL| DB[(MySQL Database)]
+    Node -->|Lectura/Escritura| FS[File System /uploads]
+    Node -->|SMTP| Email[Nodemailer / Outlook]
+```
 
-El backend proporciona:
+## 🚀 Tecnologías Principales
 
-- autenticación con credenciales de administrador y tokens JWT
-- renovación de token con refresh token
-- operaciones CRUD sobre propiedades
-- carga de imágenes y tours 360 con validación estricta
-- envío de mensajes de contacto por correo electrónico
-- protección de rutas administrativas mediante middleware
-- registro y respuesta consistente de errores
+### Backend (Core API)
+- **Node.js & Express:** Servidor robusto y escalable.
+- **MySQL2 (con Connection Pool):** Persistencia de datos de alto rendimiento.
+- **Seguridad:** JWT (Access & Refresh tokens), bcrypt, Helmet, CORS restrictivo, Express Rate Limit.
+- **Gestión de Archivos:** Multer (con validación estricta de MIME types y size limits).
+- **Notificaciones:** Nodemailer para gestión de contactos entrantes.
 
-## Requisitos previos
+### Panel de Administración (Admin Panel)
+- **React.js & Vite:** SPA ultra rápida para la gestión de inventario.
+- **Tailwind CSS:** Diseño responsivo y moderno.
+- **Axios:** Cliente HTTP con interceptores para inyección de tokens automáticos.
 
-- Node.js instalado
-- MySQL instalado y accesible
-- carpeta `uploads/` con permisos de escritura
-- variables de entorno definidas correctamente
+### Sitio Público
+- **Vanilla HTML/CSS/JS:** Optimizado para SEO, carga rápida y compatibilidad universal.
+- **Integración dinámica:** Consumo de la API mediante Fetch para hidratar el DOM.
 
-## Instalación
+---
 
-1. Instalar dependencias:
+## 📂 Estructura del Monorepo
 
+```text
+MARBAS-Inmobiliaria/
+├── admin-panel/        # SPA en React/Vite para administradores (Gestión CRUD)
+├── config/             # Configuración del Backend (DB, Multer, etc.)
+├── controllers/        # Lógica de negocio de los endpoints de la API
+├── docs/               # Documentación y diagramas
+├── frontend/           # Archivos estáticos del sitio web público al cliente
+├── middlewares/        # Middlewares (Auth, ErrorHandler, Validadores)
+├── routes/             # Definición de rutas Express
+├── uploads/            # Volumen de almacenamiento de imágenes y tours 360
+├── utils/              # Funciones de ayuda (CatchAsync, Sanitizadores, AppError)
+└── server.js           # Punto de entrada del Backend
+```
+
+---
+
+## 🛠 Instalación y Entorno de Desarrollo Local
+
+### 1. Requisitos Previos
+- Node.js (v18 o superior)
+- MySQL Server (v8 o superior) ejecutándose en puerto 3306
+
+### 2. Configuración del Backend
 ```bash
+# Instalar dependencias del backend
 npm install
+
+# Iniciar el servidor en modo desarrollo
+npm run dev
+# (O alternativamente: node server.js)
 ```
 
-2. Crear archivo `.env` en la raíz del proyecto.
-
-3. Correr el servidor:
-
+### 3. Configuración del Panel de Administración
 ```bash
-node server.js
+cd admin-panel
+# Instalar dependencias del frontend
+npm install
+
+# Iniciar el servidor de desarrollo de Vite
+npm run dev
 ```
 
-## Variables de entorno requeridas
+---
 
-El servidor valida las siguientes variables antes de iniciar:
+## 🔐 Variables de Entorno (`.env`)
 
-- `DB_HOST`
-- `DB_USER`
-- `DB_NAME`
-- `JWT_SECRET`
-- `EMAIL_USER`
-- `EMAIL_PASSWORD`
-
-Variables adicionales usadas en la configuración:
-
-- `DB_PASSWORD` (opcional, puede quedar vacío)
-- `PORT`
-- `NODE_ENV`
-- `ALLOWED_ORIGINS`
-- `JWT_EXPIRE`
-- `JWT_REFRESH_EXPIRE`
-- `MAX_FILE_SIZE`
-- `RATE_LIMIT_WINDOW`
-- `RATE_LIMIT_MAX_REQUESTS`
-- `EMAIL_FROM`
-
-### Ejemplo mínimo de `.env`
+El sistema utiliza el paradigma *Fail-Fast* durante el arranque. Si falta una variable crítica, el proceso documentará el error y abortará la ejecución.
 
 ```env
+# Configuración del Servidor
+PORT=3000
+NODE_ENV=development
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+
+# Base de Datos MySQL
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=
 DB_NAME=marbas
-JWT_SECRET=una_clave_muy_segura_y_larga
+
+# Seguridad y Autenticación JWT
+JWT_SECRET=tu_clave_secreta_super_fuerte
 JWT_EXPIRE=2h
+JWT_REFRESH_SECRET=tu_clave_secreta_para_refrescar
 JWT_REFRESH_EXPIRE=7d
+
+# Configuración de Archivos y Rate Limiting
+MAX_FILE_SIZE=10485760 # 10MB
+RATE_LIMIT_WINDOW=15
+RATE_LIMIT_MAX_REQUESTS=100
+
+# Credenciales SMTP (Contacto)
 EMAIL_USER=tu_correo@outlook.com
 EMAIL_PASSWORD=tu_contrasena_de_aplicacion
 EMAIL_FROM=MARBAS <tu_correo@outlook.com>
-PORT=3000
-NODE_ENV=development
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
-MAX_FILE_SIZE=10485760
-RATE_LIMIT_WINDOW=15
-RATE_LIMIT_MAX_REQUESTS=100
 ```
 
-## Endpoints principales
+---
 
-### Autenticación
+## 🗄 Esquema de Base de Datos (ERD)
 
-#### POST /api/login
+```mermaid
+erDiagram
+    useradmin {
+        int id PK
+        varchar user
+        varchar password "bcrypt hash"
+    }
+    hero_imagenes {
+        int id PK
+        varchar url "Ruta de la imagen"
+        int orden "Orden de visualización"
+        tinyint activa "Estado (0/1)"
+        datetime created_at
+    }
+    propiedades {
+        int id PK
+        varchar title
+        decimal price
+        varchar location
+        int bedrooms
+        int bathroom
+        decimal meters
+        text description
+        tinyint tour "Booleano"
+        varchar image "Foto principal"
+        json galery "Array de URLs"
+        json photo_360 "Array de URLs"
+        decimal latitude
+        decimal longitude
+        varchar operation_type
+        varchar currency
+    }
+```
 
-Cuerpo JSON:
+---
 
-```json
-{
-  "usuario": "admin",
-  "password": "tu_password"
+## 🛡 Seguridad Aplicada
+
+Como Ingenieros de Software, diseñamos el sistema aplicando el principio de **Defensa en Profundidad (Defense in Depth)**:
+
+1. **Protección a Nivel de Red / Transporte:**
+   - CORS restrictivo configurado mediante whitelist (`ALLOWED_ORIGINS`).
+   - Cabeceras de seguridad inyectadas vía `Helmet`.
+   
+2. **Protección a Nivel de Aplicación:**
+   - Limitador de peticiones (`express-rate-limit`) para mitigar ataques DDoS y fuerza bruta en endpoints críticos (Login, Contacto).
+   - Sanitización de Entradas (`validator`) para prevenir inyecciones SQL y XSS.
+   - Manejador de Errores Centralizado: Evita la fuga de información sensible (Stack Traces) en producción.
+
+3. **Autenticación y Sesión:**
+   - Esquema Dual de Tokens: Access Token de corta duración (2h) y Refresh Token en frío (7d).
+   - Contraseñas protegidas mediante Hash iterativo (Bcrypt).
+
+4. **Sistema de Archivos Seguro:**
+   - Los archivos subidos se validan en memoria mediante `Multer` (MIME-Type spoofing prevention) antes de tocar el disco.
+   - Nombres de archivo ofuscados y saneados con timestamps + random hashes para evitar colisiones de nombres o ejecución remota (Directory Traversal).
+
+---
+
+## 🚀 Despliegue en Producción (Guía Rápida)
+
+Para entornos productivos, se recomienda utilizar **PM2** como gestor de procesos y **Nginx** como Proxy Inverso.
+
+### 1. Iniciar el servicio con PM2
+```bash
+npm install -g pm2
+pm2 start server.js --name "marbas-api" --env production
+pm2 save
+pm2 startup
+```
+
+### 2. Configurar Nginx (Proxy y Archivos Estáticos)
+```nginx
+server {
+    listen 80;
+    server_name marbaspropiedades.com.ar;
+
+    # Frontend Público
+    location / {
+        root /var/www/marbas/frontend;
+        index index.html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Proxy a la API de Node.js
+    location /api/ {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Archivos subidos (Imágenes)
+    location /uploads/ {
+        alias /var/www/marbas/uploads/;
+        expires 30d;
+        add_header Cache-Control "public, max-age=2592000";
+    }
 }
 ```
-
-Respuesta exitosa:
-
-```json
-{
-  "token": "...",
-  "refreshToken": "...",
-  "usuario": "admin",
-  "expiresIn": "2h"
-}
-```
-
-#### POST /api/refresh-token
-
-Cuerpo JSON:
-
-```json
-{
-  "refreshToken": "..."
-}
-```
-
-Respuesta exitosa:
-
-```json
-{
-  "token": "..."
-}
-```
-
-### Propiedades
-
-#### GET /api/propiedades
-
-Devuelve el listado completo de propiedades. La respuesta incluye los campos almacenados en la base de datos y normaliza las colecciones JSON de la galería y los tours 360.
-
-#### POST /api/propiedades
-
-Ruta protegida. Requiere cabecera:
-
-```
-Authorization: Bearer <token>
-```
-
-Carga multipart/form-data con los siguientes campos:
-
-- `title`
-- `price`
-- `location`
-- `bedrooms`
-- `bathroom`
-- `meters`
-- `description`
-- `tour`
-- `latitude`
-- `longitude`
-- `foto_principal` (único)
-- `photo_360` (múltiple)
-- `fotos_galeria` (múltiple)
-
-Respuesta exitosa:
-
-```json
-{
-  "mensaje": "Propiedad guardada exitosamente"
-}
-```
-
-#### PUT /api/propiedades/:id
-
-Ruta protegida. Actualiza metadatos de la propiedad.
-
-Cuerpo JSON:
-
-```json
-{
-  "title": "Nuevo título",
-  "price": 100000,
-  "location": "Ubicación",
-  "bedrooms": 2,
-  "bathroom": 1,
-  "meters": 80,
-  "description": "Descripción actualizada",
-  "latitude": -34.6,
-  "longitude": -58.4
-}
-```
-
-Respuesta exitosa:
-
-```json
-{
-  "mensaje": "Propiedad actualizada exitosamente"
-}
-```
-
-#### DELETE /api/propiedades/:id
-
-Ruta protegida. Elimina la propiedad y borra los archivos asociados de la carpeta `uploads/`.
-
-Respuesta exitosa:
-
-```json
-{
-  "mensaje": "Propiedad eliminada exitosamente"
-}
-```
-
-### Contacto
-
-#### POST /api/contacto
-
-Llamada pública protegida por rate limiting.
-
-Cuerpo JSON:
-
-```json
-{
-  "nombre": "Juan",
-  "telefono": "12345678",
-  "email": "juan@mail.com",
-  "mensaje": "Consulta sobre la propiedad"
-}
-```
-
-Respuesta exitosa:
-
-```json
-{
-  "mensaje": "Correo enviado exitosamente"
-}
-```
-
-## Comportamiento de la aplicación
-
-- El servidor expone estáticamente `uploads/` para servir imágenes.
-- Las credenciales de administrador se buscan en la tabla `useradmin` de la base de datos.
-- Los datos de la galería y los tours se almacenan como JSON en MySQL y se parsean al recuperar propiedades.
-- Si una galería o tour contiene datos corruptos, el servidor maneja el error y retorna la propiedad con las rutas posibles.
-
-## Seguridad aplicada
-
-- `helmet` para reforzar cabeceras HTTP.
-- `cors` restringido a orígenes definidos en `ALLOWED_ORIGINS`.
-- `express-rate-limit` para proteger rutas generales, login y contacto.
-- `bcrypt` para comparar contraseñas almacenadas de forma segura.
-- Validación de archivos con `multer` por extensión y tipo MIME.
-- Límite de tamaño de archivo configurado mediante `MAX_FILE_SIZE`.
-- Sanitización de entradas con `validator` antes de insertar en la base de datos.
-- Manejo de errores centralizado para respuestas consistentes.
-
-## Mejoras realizadas
-
-- Pool de conexiones MySQL para evitar bloqueos y mejorar concurrencia.
-- Compresión de respuestas HTTP con `compression`.
-- Envío de correo con `nodemailer` usando SMTP.
-- Gestión segura de archivos en `uploads/` con nombres normalizados.
-- Eliminación física de imágenes al borrar una propiedad.
-- Renovación de token mediante refresh token.
-
-## Recomendaciones de operación
-
-- No subir `.env` al repositorio.
-- Usar una clave JWT fuerte y rotarla periódicamente.
-- Verificar que `uploads/` tenga permisos de escritura antes de ejecutar el servidor.
-- Revisar el estado de la conexión SMTP cuando se activa la funcionalidad de contacto.
-- Usar HTTPS en producción y configurar un proxy o balanceador cuando sea necesario.
-
-## Validación de entorno y arranque
-
-Al iniciar el servidor, se comprueba:
-
-- que existan las variables de entorno mínimas exigidas
-- que la conexión a MySQL sea válida
-- que el transporte SMTP esté configurado correctamente
-
-Si falta alguna variable obligatoria, el servidor no arranca y muestra el error correspondiente.
-
-## Estructura del proyecto
-
-- `server.js`: archivo principal del backend
-- `package.json`: dependencias del proyecto
-- `uploads/`: carpeta de almacenamiento de archivos subidos
-- `js/`: scripts del frontend y documentación adicional
-- `SETUP.md`: guía de configuración del servidor
-- `docs/`: documentación adicional
-
-## Consideraciones finales
-
-Este backend está preparado para operar como soporte de una plataforma inmobiliaria con operaciones de catálogo, gestión de archivos y atención al cliente. La implementación se orientó a minimizar riesgos de seguridad y a mantener el código claro y extensible para futuros ajustes o incremento de funcionalidades.

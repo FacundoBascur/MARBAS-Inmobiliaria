@@ -1,9 +1,16 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marbas - Propiedades</title>
+    <title>Marbas Propiedades - Inmobiliaria en General Roca, Río Negro</title>
+    <meta name="description"
+        content="Encontrá casas, departamentos y terrenos en venta y alquiler en General Roca, Río Negro. Marbas Propiedades - Martin Bascur, MAT 3716.">
+    <meta property="og:title" content="Marbas Propiedades - Inmobiliaria en General Roca">
+    <meta property="og:description"
+        content="Encontrá la propiedad ideal para vos y tu familia en General Roca, Río Negro.">
+    <meta property="og:type" content="website">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/index.css">
@@ -34,14 +41,21 @@
         <div class="hero-content">
             <h1>Encontrá tu lugar en el mundo</h1>
             <p>
-                En <strong>Marbas Propiedades</strong> no vendemos hogares, vendemos <strong>comas</strong> para que sigas
-                construyendo tu historia. Descubrí nuestras propiedades y encontrá el espacio ideal para vos y tu familia.
+                En <strong>Marbas Propiedades</strong> no vendemos hogares, vendemos <strong>comas</strong> para que
+                sigas
+                construyendo tu historia. Descubrí nuestras propiedades y encontrá el espacio ideal para vos y tu
+                familia.
             </p>
             <a href="#catalogo" class="btn-hero">Ver Propiedades</a>
         </div>
         <div class="filtros-bar">
             <form class="filtros-form" id="form-filtros">
                 <input type="text" id="filtro-ubicacion" placeholder="📍 Ubicación...">
+                <select id="filtro-operacion">
+                    <option value="">🏷️ Todas</option>
+                    <option value="En Venta">En Venta</option>
+                    <option value="En Alquiler">En Alquiler</option>
+                </select>
                 <input type="number" id="filtro-precio-min" placeholder="💲 Precio mín.">
                 <input type="number" id="filtro-precio-max" placeholder="💲 Precio máx.">
                 <button type="submit" class="btn-filtrar">Buscar</button>
@@ -64,8 +78,13 @@
                 <h3>Hablemos</h3>
                 <p>Completá el formulario y nos pondremos en contacto a la brevedad para asesorarte.</p>
                 <p>📍 General Roca, Río Negro</p>
-                <p>📞 +54 9  2984897012</p>
+                <p>📞 +54 9 2984897012</p>
                 <p>✉️ marbaspropiedades@gmail.com</p>
+
+                <div class="vender-cta">
+                    <h4>¿Querés vender tu propiedad?</h4>
+                    <p>Contactanos y te asesoramos para venderla al mejor precio del mercado.</p>
+                </div>
             </div>
 
             <form id="form-contacto" class="formulario">
@@ -85,10 +104,11 @@
                     <label>Mensaje</label>
                     <textarea name="mensaje" rows="4" required placeholder="Escribí tu consulta acá..."></textarea>
                 </div>
-                
+
                 <button type="submit" class="btn-submit">Enviar Mensaje</button>
-                
-                <p id="mensaje-respuesta" style="text-align: center; margin-top: 15px; font-weight: bold; min-height: 24px;"></p>
+
+                <p id="mensaje-respuesta"
+                    style="text-align: center; margin-top: 15px; font-weight: bold; min-height: 24px;"></p>
             </form>
         </div>
     </section>
@@ -113,11 +133,15 @@
     </footer>
 
     <!-- Botón flotante de WhatsApp -->
-    <a href="https://wa.me/5492984897012" target="_blank" rel="noopener noreferrer" class="whatsapp-float" aria-label="Contactar por WhatsApp">
+    <a href="https://wa.me/5492984897012" target="_blank" rel="noopener noreferrer" class="whatsapp-float"
+        aria-label="Contactar por WhatsApp">
         💬
         <span class="wa-tooltip">¡Consultanos por WhatsApp!</span>
     </a>
 
+    <script src="js/config.js"></script>
+    <script src="js/common.js"></script>
     <script src="js/index.js"></script>
 </body>
+
 </html>

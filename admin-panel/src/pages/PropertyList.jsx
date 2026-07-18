@@ -35,7 +35,7 @@ export default function PropertyList() {
     }
   };
 
-  const API_URL = 'http://localhost:3000/'; 
+  const API_URL = import.meta.env.VITE_UPLOADS_URL || 'http://localhost:3000/'; 
 
   if (loading) return <div className="text-center py-10 font-bold text-[#001F3F]">Cargando propiedades...</div>;
   if (error) return <div className="text-[#FF6B6B] font-bold p-4 bg-red-50 rounded-lg">{error}</div>;
@@ -59,7 +59,7 @@ export default function PropertyList() {
             <div className="h-56 overflow-hidden bg-gray-100 relative">
               {prop.image ? (
                 <img 
-                  src={`${API_URL}${prop.image}`} 
+                  src={`${API_URL.replace(/\/$/, '')}/${prop.image}`} 
                   alt={prop.title} 
                   className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
                 />
@@ -67,7 +67,10 @@ export default function PropertyList() {
                 <div className="w-full h-full flex items-center justify-center text-gray-400 bg-[#F4F7F6]">Sin imagen</div>
               )}
               <div className="absolute top-4 right-4 bg-[#FDC830] text-[#001F3F] px-3 py-1 font-bold rounded-md text-sm shadow-md">
-                USD {prop.price?.toLocaleString()}
+                {prop.currency || 'USD'} {prop.price?.toLocaleString()}
+              </div>
+              <div className="absolute top-4 left-4 bg-[#001F3F] text-[#FDC830] px-3 py-1 font-bold rounded-md text-sm shadow-md">
+                {prop.operation_type || 'En Venta'}
               </div>
             </div>
             

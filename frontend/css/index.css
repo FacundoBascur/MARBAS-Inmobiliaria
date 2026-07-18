@@ -266,6 +266,22 @@
     box-shadow: 0 16px 40px rgba(0, 31, 63, 0.14); 
 }
 
+/* Animación de entrada escalonada */
+@keyframes cardFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(25px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card-enter {
+    animation: cardFadeIn 0.5s ease-out both;
+}
+
 /* Contenedor de imagen con overflow:hidden para el zoom */
 .card-img-wrapper {
     height: 210px;
@@ -296,6 +312,21 @@
     font-size: 0.7rem; 
     font-weight: bold; 
     box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.badge-operation { 
+    position: absolute; 
+    top: 10px; 
+    left: 10px; 
+    background: var(--primary-blue); 
+    color: var(--accent-yellow); 
+    padding: 4px 10px; 
+    border-radius: 5px;
+    font-size: 0.7rem; 
+    font-weight: bold; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .card-content { 
@@ -371,6 +402,25 @@
     margin-bottom: 1rem; 
     color: #555;
     line-height: 1.6;
+}
+
+.vender-cta {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: #f4f7f6;
+    border-left: 4px solid var(--accent-yellow);
+    border-radius: 0 8px 8px 0;
+}
+
+.vender-cta h4 {
+    color: var(--primary-blue);
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.vender-cta p {
+    margin-bottom: 0;
+    font-size: 0.95rem;
 }
 
 .formulario { 

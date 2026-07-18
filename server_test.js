@@ -70,7 +70,7 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 // Inicialización del servidor
-const PUERTO = process.env.PORT || 3000;
+const PUERTO = 3003;
 app.listen(PUERTO, () => {
-    console.log(`Servidor en puerto ${PUERTO}`);
+    console.log(`Servidor de prueba en puerto ${PUERTO}`);
 });

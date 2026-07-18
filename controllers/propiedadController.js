@@ -28,8 +28,27 @@ const getPropiedades = catchAsync(async (req, res, next) => {
     res.json(propiedadesFormateadas);
 });
 
+const getPropiedadById = catchAsync(async (req, res, next) => {
+    const idPropiedad = parseInt(req.params.id);
+    if (isNaN(idPropiedad)) {
+        throw new AppError('ID de propiedad inválido', 400);
+    }
+
+    const [resultados] = await pool.query('SELECT * FROM propiedades WHERE id = ?', [idPropiedad]);
+
+    if (resultados.length === 0) {
+        throw new AppError('Propiedad no encontrada', 404);
+    }
+
+    const prop = resultados[0];
+    prop.galery = parseJSONSafe(prop.galery);
+    prop.photo_360 = parseJSONSafe(prop.photo_360);
+
+    res.json(prop);
+});
+
 const createPropiedad = catchAsync(async (req, res, next) => {
-    const { title, price, location, bedrooms, bathroom, meters, tour, description, latitude, longitude } = req.body;
+    const { title, price, location, bedrooms, bathroom, meters, tour, description, latitude, longitude, operation_type, currency } = req.body;
 
     if (!title || !price || !location) {
         throw new AppError('Campos requeridos faltantes', 400);
@@ -43,9 +62,11 @@ const createPropiedad = catchAsync(async (req, res, next) => {
         bathroom: parseInt(bathroom) || 0,
         meters: parseFloat(meters) || 0,
         description: sanitizar(description),
-        tour: sanitizar(tour).substring(0, 50),
+        tour: parseInt(tour) ? 1 : 0,
         latitude: latitude ? parseFloat(latitude) : null,
-        longitude: longitude ? parseFloat(longitude) : null
+        longitude: longitude ? parseFloat(longitude) : null,
+        operation_type: sanitizar(operation_type || 'En Venta').substring(0, 50),
+        currency: sanitizar(currency || 'USD').substring(0, 10)
     };
 
     const fotoPrincipal = req.files['foto_principal'] ? req.files['foto_principal'][0] : null;
@@ -69,8 +90,8 @@ const createPropiedad = catchAsync(async (req, res, next) => {
 
     const consultaSQL = `
         INSERT INTO propiedades 
-        (title, price, location, bedrooms, bathroom, meters, description, image, photo_360, galery, tour, latitude, longitude)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (title, price, location, bedrooms, bathroom, meters, description, image, photo_360, galery, tour, latitude, longitude, operation_type, currency)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const valores = [
@@ -86,7 +107,9 @@ const createPropiedad = catchAsync(async (req, res, next) => {
         JSON.stringify(galeryPaths),
         propiedadData.tour,
         propiedadData.latitude,
-        propiedadData.longitude
+        propiedadData.longitude,
+        propiedadData.operation_type,
+        propiedadData.currency
     ];
 
     await pool.query(consultaSQL, valores);
@@ -99,10 +122,70 @@ const updatePropiedad = catchAsync(async (req, res, next) => {
         throw new AppError('ID de propiedad inválido', 400);
     }
 
-    const { title, price, location, bedrooms, bathroom, meters, description, tour, latitude, longitude } = req.body;
+    const { title, price, location, bedrooms, bathroom, meters, description, tour, latitude, longitude, operation_type, currency } = req.body;
 
     if (!title || !price || !location) {
         throw new AppError('Campos requeridos faltantes', 400);
+    }
+
+    // Parsear imágenes a eliminar
+    let imagenesAEliminar = [];
+    if (req.body.imagenes_a_eliminar) {
+        try {
+            imagenesAEliminar = JSON.parse(req.body.imagenes_a_eliminar);
+            if (!Array.isArray(imagenesAEliminar)) imagenesAEliminar = [imagenesAEliminar];
+        } catch (err) {
+            imagenesAEliminar = [req.body.imagenes_a_eliminar];
+        }
+    }
+
+    // Obtener la propiedad actual para manipular los arrays de imágenes
+    const [propiedadesBD] = await pool.query('SELECT image, galery, photo_360 FROM propiedades WHERE id = ?', [idPropiedad]);
+    if (propiedadesBD.length === 0) {
+        throw new AppError('Propiedad no encontrada', 404);
+    }
+    const propiedadActual = propiedadesBD[0];
+    let galeriaActual = parseJSONSafe(propiedadActual.galery);
+    let fotos360Actuales = parseJSONSafe(propiedadActual.photo_360);
+    let imagePath = propiedadActual.image;
+
+    // 1. Eliminar imágenes marcadas (física y lógicamente)
+    if (imagenesAEliminar.length > 0) {
+        await eliminarArchivos(imagenesAEliminar);
+        galeriaActual = galeriaActual.filter(img => !imagenesAEliminar.includes(img));
+        fotos360Actuales = fotos360Actuales.filter(img => !imagenesAEliminar.includes(img));
+        // Si borra la foto principal (poco común pero por las dudas)
+        if (imagenesAEliminar.includes(imagePath)) {
+            imagePath = '';
+        }
+    }
+
+    // 2. Procesar nuevas imágenes subidas
+    const fotoPrincipalNueva = req.files && req.files['foto_principal'] ? req.files['foto_principal'][0] : null;
+    if (fotoPrincipalNueva) {
+        if (imagePath) await eliminarArchivos([imagePath]); // Borrar la vieja
+        imagePath = 'uploads/' + fotoPrincipalNueva.filename;
+    }
+
+    if (req.files && req.files['photo_360']) {
+        const nuevas360 = req.files['photo_360'].map(file => 'uploads/' + file.filename);
+        fotos360Actuales = [...fotos360Actuales, ...nuevas360];
+    }
+
+    if (req.files && req.files['fotos_galeria']) {
+        for (const file of req.files['fotos_galeria']) {
+            if (!fotoPrincipalNueva || file.originalname !== fotoPrincipalNueva.originalname) {
+                galeriaActual.push('uploads/' + file.filename);
+            } else {
+                await fs.unlink(file.path).catch(() => {});
+            }
+        }
+    }
+
+    // 3. Si la foto principal fue eliminada y no se subió una nueva,
+    // usar la primera foto de la galería (si existe) como portada.
+    if (!imagePath && galeriaActual.length > 0) {
+        imagePath = galeriaActual.shift(); // Quitamos de la galería y la ponemos de portada
     }
 
     const propiedadData = {
@@ -113,14 +196,16 @@ const updatePropiedad = catchAsync(async (req, res, next) => {
         bathroom: parseInt(bathroom) || 0,
         meters: parseFloat(meters) || 0,
         description: sanitizar(description),
-        tour: sanitizar(tour).substring(0, 50),
+        tour: parseInt(tour) ? 1 : 0,
         latitude: latitude ? parseFloat(latitude) : null,
-        longitude: longitude ? parseFloat(longitude) : null
+        longitude: longitude ? parseFloat(longitude) : null,
+        operation_type: sanitizar(operation_type || 'En Venta').substring(0, 50),
+        currency: sanitizar(currency || 'USD').substring(0, 10)
     };
 
     const consultaSQL = `
         UPDATE propiedades 
-        SET title = ?, price = ?, location = ?, bedrooms = ?, bathroom = ?, meters = ?, description = ?, tour = ?, latitude = ?, longitude = ?
+        SET title = ?, price = ?, location = ?, bedrooms = ?, bathroom = ?, meters = ?, description = ?, tour = ?, latitude = ?, longitude = ?, operation_type = ?, currency = ?, image = ?, galery = ?, photo_360 = ?
         WHERE id = ?
     `;
 
@@ -135,14 +220,15 @@ const updatePropiedad = catchAsync(async (req, res, next) => {
         propiedadData.tour,
         propiedadData.latitude,
         propiedadData.longitude,
+        propiedadData.operation_type,
+        propiedadData.currency,
+        imagePath,
+        JSON.stringify(galeriaActual),
+        JSON.stringify(fotos360Actuales),
         idPropiedad
     ];
 
-    const [resultado] = await pool.query(consultaSQL, valores);
-
-    if (resultado.affectedRows === 0) {
-        throw new AppError('Propiedad no encontrada', 404);
-    }
+    await pool.query(consultaSQL, valores);
 
     res.json({ mensaje: 'Propiedad actualizada exitosamente' });
 });
@@ -181,6 +267,7 @@ const deletePropiedad = catchAsync(async (req, res, next) => {
 
 module.exports = {
     getPropiedades,
+    getPropiedadById,
     createPropiedad,
     updatePropiedad,
     deletePropiedad
