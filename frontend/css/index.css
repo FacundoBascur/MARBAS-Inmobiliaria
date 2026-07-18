@@ -1,0 +1,529 @@
+/* ==============================================================
+   HERO SECTION + SLIDESHOW
+   ============================================================== */
+.hero-section { 
+    position: relative; 
+    height: 100vh;
+    min-height: 600px;
+    background: var(--primary-blue); /* color base mientras carga */
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    justify-content: center; 
+    text-align: center; 
+    color: var(--white);
+    overflow: hidden;
+}
+
+/* Contenedor de diapositivas (slideshow) */
+.hero-slides {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+/* Cada diapositiva */
+.hero-slide {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transform: scale(1);
+    /* La transition de transform es gestionada por JS para evitar el salto al cambiar */
+    transition: opacity 1.5s ease-in-out;
+    will-change: opacity, transform;
+}
+
+.hero-slide.activa {
+    opacity: 1;
+}
+
+/* Ken Burns: solo cuando la slide es visible y hace zoom lento */
+.hero-slide.zoom {
+    transform: scale(1.07);
+    transition: opacity 1.5s ease-in-out, transform 9s linear;
+}
+
+/* Fallback: si no hay imágenes de la BD se usa esta */
+.hero-slide-fallback {
+    background-image: url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1920&q=80');
+    opacity: 1;
+    transform: scale(1.07);
+    transition: transform 9s linear;
+    animation: kenBurnsFallback 9s linear infinite alternate;
+}
+
+@keyframes kenBurnsFallback {
+    from { transform: scale(1); }
+    to   { transform: scale(1.07); }
+}
+
+
+/* Puntitos de navegación */
+.hero-dots {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 3;
+}
+
+.hero-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.4);
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.3s ease;
+    padding: 0;
+}
+
+.hero-dot.activo {
+    background: var(--accent-yellow);
+    transform: scale(1.3);
+}
+
+
+.hero-overlay { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 31, 63, 0.7) 0%,
+        rgba(0, 31, 63, 0.5) 60%,
+        rgba(0, 31, 63, 0.8) 100%
+    );
+    z-index: 1; 
+}
+
+.hero-content { 
+    position: relative; 
+    z-index: 2; 
+    max-width: 800px; 
+    padding: 0 20px;
+    animation: heroEntrada 0.9s ease-out both;
+}
+
+@keyframes heroEntrada {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.hero-content h1 { 
+    font-size: 3.8rem; 
+    color: var(--accent-yellow); 
+    margin-bottom: 1.2rem; 
+    text-shadow: 2px 2px 12px rgba(0,0,0,0.7);
+    line-height: 1.15;
+}
+
+.hero-content p { 
+    font-size: 1.15rem; 
+    line-height: 1.7; 
+    margin-bottom: 2.5rem; 
+    text-shadow: 1px 1px 6px rgba(0,0,0,0.8);
+    color: rgba(255,255,255,0.92);
+}
+
+.btn-hero { 
+    background: var(--accent-yellow); 
+    color: var(--primary-blue); 
+    padding: 16px 40px; 
+    text-decoration: none; 
+    font-weight: bold; 
+    border-radius: 50px;
+    font-size: 1.05rem; 
+    transition: all 0.35s ease; 
+    display: inline-block; 
+    box-shadow: 0 6px 20px rgba(253, 200, 48, 0.35);
+    letter-spacing: 0.5px;
+}
+
+.btn-hero:hover { 
+    background: var(--white); 
+    transform: translateY(-4px); 
+    box-shadow: 0 12px 30px rgba(253, 200, 48, 0.5); 
+}
+
+/* ==============================================================
+   BARRA DE FILTROS
+   ============================================================== */
+.filtros-bar {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 900px;
+    margin-top: 2.5rem;
+    padding: 0 20px;
+}
+
+.filtros-form {
+    display: flex;
+    gap: 0.75rem;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+}
+
+.filtros-form input,
+.filtros-form select {
+    flex: 1;
+    min-width: 150px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.88rem;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--primary-blue);
+    transition: all 0.3s ease;
+}
+
+.filtros-form input:focus,
+.filtros-form select:focus {
+    outline: none;
+    background: white;
+    box-shadow: 0 0 0 2px var(--accent-yellow);
+}
+
+.filtros-form input::placeholder {
+    color: #888;
+}
+
+.btn-filtrar {
+    background: var(--accent-yellow);
+    color: var(--primary-blue);
+    padding: 10px 22px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.88rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-filtrar:hover {
+    background: white;
+    transform: translateY(-2px);
+}
+
+/* ==============================================================
+   CATÁLOGO
+   ============================================================== */
+.catalogo-container { 
+    padding: 5rem 5%; 
+    max-width: 1600px; 
+    margin: 0 auto; 
+}
+
+.section-title { 
+    margin-bottom: 0.5rem; 
+    color: var(--primary-blue); 
+    text-align: center;
+    font-size: 2rem;
+}
+
+.section-subtitle {
+    text-align: center;
+    color: #888;
+    font-size: 0.95rem;
+    margin-bottom: 2.5rem;
+}
+
+.grid-propiedades { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); 
+    gap: 2.5rem; 
+    width: 100%; 
+}
+
+/* Tarjeta con zoom en imagen */
+.card { 
+    background: var(--white); 
+    border-radius: 16px; 
+    overflow: hidden; 
+    box-shadow: 0 6px 25px rgba(0,0,0,0.07);
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.card:hover { 
+    transform: translateY(-8px); 
+    box-shadow: 0 16px 40px rgba(0, 31, 63, 0.14); 
+}
+
+/* Animación de entrada escalonada */
+@keyframes cardFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(25px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card-enter {
+    animation: cardFadeIn 0.5s ease-out both;
+}
+
+/* Contenedor de imagen con overflow:hidden para el zoom */
+.card-img-wrapper {
+    height: 210px;
+    overflow: hidden;
+    position: relative;
+}
+
+.card-img { 
+    height: 100%;
+    width: 100%;
+    background-size: cover; 
+    background-position: center; 
+    transition: transform 0.45s ease;
+}
+
+.card:hover .card-img {
+    transform: scale(1.07);
+}
+
+.badge-360 { 
+    position: absolute; 
+    bottom: 10px; 
+    right: 10px; 
+    background: var(--accent-yellow); 
+    color: var(--primary-blue); 
+    padding: 4px 10px; 
+    border-radius: 20px;
+    font-size: 0.7rem; 
+    font-weight: bold; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.badge-operation { 
+    position: absolute; 
+    top: 10px; 
+    left: 10px; 
+    background: var(--primary-blue); 
+    color: var(--accent-yellow); 
+    padding: 4px 10px; 
+    border-radius: 5px;
+    font-size: 0.7rem; 
+    font-weight: bold; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.card-content { 
+    padding: 1.5rem; 
+}
+
+.card-content .price { 
+    font-size: 1.45rem; 
+    font-weight: bold; 
+    display: block; 
+    margin-bottom: 0.4rem; 
+    color: var(--primary-blue); 
+}
+
+.card-content h3 { 
+    font-size: 1rem; 
+    margin-bottom: 0.4rem; 
+    color: var(--text-on-white);
+    font-weight: 600;
+}
+
+.card-content .loc { 
+    color: #888; 
+    font-size: 0.85rem; 
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.icons { 
+    display: flex; 
+    gap: 1rem; 
+    font-size: 0.85rem; 
+    color: #555; 
+    margin-bottom: 1.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+/* ==============================================================
+   CONTACTO
+   ============================================================== */
+.contacto-section { 
+    padding: 5rem 5%; 
+    background-color: var(--white); 
+}
+
+.contacto-container { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 3rem; 
+    max-width: 1600px; 
+    margin: 0 auto; 
+    background: var(--background-gray); 
+    padding: 2.5rem; 
+    border-radius: 16px; 
+    box-shadow: 0 8px 30px rgba(0,0,0,0.06); 
+}
+
+.contacto-info { 
+    flex: 1; 
+    min-width: 280px; 
+}
+
+.contacto-info h3 { 
+    color: var(--primary-blue); 
+    margin-bottom: 1rem; 
+    font-size: 1.6rem; 
+}
+
+.contacto-info p { 
+    margin-bottom: 1rem; 
+    color: #555;
+    line-height: 1.6;
+}
+
+.vender-cta {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: #f4f7f6;
+    border-left: 4px solid var(--accent-yellow);
+    border-radius: 0 8px 8px 0;
+}
+
+.vender-cta h4 {
+    color: var(--primary-blue);
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.vender-cta p {
+    margin-bottom: 0;
+    font-size: 0.95rem;
+}
+
+.formulario { 
+    flex: 2; 
+    min-width: 300px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 1rem; 
+}
+
+.input-group { 
+    display: flex; 
+    flex-direction: column; 
+    margin-bottom: 6px; 
+}
+
+.input-group label { 
+    margin-bottom: 6px; 
+    font-weight: bold; 
+    color: var(--primary-blue); 
+    font-size: 0.85rem;
+    letter-spacing: 0.3px;
+}
+
+.input-group input, 
+.input-group textarea { 
+    width: 100%; 
+    padding: 13px 15px; 
+    border: 1.5px solid #e0e0e0; 
+    border-radius: 8px; 
+    font-family: inherit; 
+    font-size: 0.95rem;
+    transition: 0.3s;
+    background: white;
+}
+
+.input-group input:focus, 
+.input-group textarea:focus { 
+    outline: none; 
+    border-color: var(--accent-yellow); 
+    box-shadow: 0 0 0 3px rgba(253, 200, 48, 0.2); 
+}
+
+.btn-submit { 
+    background: var(--primary-blue); 
+    color: var(--accent-yellow); 
+    padding: 15px; 
+    border: none; 
+    border-radius: 8px; 
+    font-weight: bold; 
+    font-size: 1.05rem; 
+    cursor: pointer; 
+    transition: 0.3s; 
+    width: 100%;
+    letter-spacing: 0.5px;
+}
+
+.btn-submit:hover { 
+    background: var(--accent-yellow); 
+    color: var(--primary-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(253, 200, 48, 0.3);
+}
+
+/* ==============================================================
+   RESPONSIVE
+   ============================================================== */
+@media (max-width: 768px) {
+    .hero-content h1 { 
+        font-size: 2.3rem; 
+    }
+    
+    .hero-content p { 
+        font-size: 1rem; 
+    }
+
+    .hero-section {
+        background-attachment: scroll;
+    }
+    
+    .filtros-form {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filtros-form input,
+    .filtros-form select,
+    .btn-filtrar {
+        width: 100%;
+        min-width: unset;
+    }
+    
+    .contacto-container { 
+        flex-direction: column;
+        padding: 1.5rem;
+    }
+    
+    .contacto-info { 
+        text-align: center; 
+    }
+
+    .catalogo-container {
+        padding: 3rem 5%;
+    }
+}
+
