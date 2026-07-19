@@ -16,6 +16,19 @@ const parseJSONSafe = (data) => {
 };
 
 const getPropiedades = catchAsync(async (req, res, next) => {
+    const [resultados] = await pool.query('SELECT * FROM propiedades WHERE is_public = 1');
+
+    const propiedadesFormateadas = resultados.map(prop => {
+        const galeriaParseada = parseJSONSafe(prop.galery);
+        const tour360Parseado = parseJSONSafe(prop.photo_360);
+
+        return { ...prop, galery: galeriaParseada, photo_360: tour360Parseado };
+    });
+
+    res.json(propiedadesFormateadas);
+});
+
+const getTodasPropiedades = catchAsync(async (req, res, next) => {
     const [resultados] = await pool.query('SELECT * FROM propiedades');
 
     const propiedadesFormateadas = resultados.map(prop => {
@@ -48,7 +61,7 @@ const getPropiedadById = catchAsync(async (req, res, next) => {
 });
 
 const createPropiedad = catchAsync(async (req, res, next) => {
-    const { title, price, location, bedrooms, bathroom, meters, tour, description, latitude, longitude, operation_type, currency } = req.body;
+    const { title, price, location, bedrooms, bathroom, meters, tour, description, latitude, longitude, operation_type, currency, is_public } = req.body;
 
     if (!title || !price || !location) {
         throw new AppError('Campos requeridos faltantes', 400);
@@ -66,7 +79,8 @@ const createPropiedad = catchAsync(async (req, res, next) => {
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
         operation_type: sanitizar(operation_type || 'En Venta').substring(0, 50),
-        currency: sanitizar(currency || 'USD').substring(0, 10)
+        currency: sanitizar(currency || 'USD').substring(0, 10),
+        is_public: is_public !== undefined ? (parseInt(is_public) ? 1 : 0) : 1
     };
 
     const fotoPrincipal = req.files['foto_principal'] ? req.files['foto_principal'][0] : null;
@@ -90,8 +104,8 @@ const createPropiedad = catchAsync(async (req, res, next) => {
 
     const consultaSQL = `
         INSERT INTO propiedades 
-        (title, price, location, bedrooms, bathroom, meters, description, image, photo_360, galery, tour, latitude, longitude, operation_type, currency)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (title, price, location, bedrooms, bathroom, meters, description, image, photo_360, galery, tour, latitude, longitude, operation_type, currency, is_public)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const valores = [
@@ -109,7 +123,8 @@ const createPropiedad = catchAsync(async (req, res, next) => {
         propiedadData.latitude,
         propiedadData.longitude,
         propiedadData.operation_type,
-        propiedadData.currency
+        propiedadData.currency,
+        propiedadData.is_public
     ];
 
     await pool.query(consultaSQL, valores);
@@ -122,7 +137,7 @@ const updatePropiedad = catchAsync(async (req, res, next) => {
         throw new AppError('ID de propiedad inválido', 400);
     }
 
-    const { title, price, location, bedrooms, bathroom, meters, description, tour, latitude, longitude, operation_type, currency } = req.body;
+    const { title, price, location, bedrooms, bathroom, meters, description, tour, latitude, longitude, operation_type, currency, is_public } = req.body;
 
     if (!title || !price || !location) {
         throw new AppError('Campos requeridos faltantes', 400);
@@ -200,12 +215,13 @@ const updatePropiedad = catchAsync(async (req, res, next) => {
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
         operation_type: sanitizar(operation_type || 'En Venta').substring(0, 50),
-        currency: sanitizar(currency || 'USD').substring(0, 10)
+        currency: sanitizar(currency || 'USD').substring(0, 10),
+        is_public: is_public !== undefined ? (parseInt(is_public) ? 1 : 0) : 1
     };
 
     const consultaSQL = `
         UPDATE propiedades 
-        SET title = ?, price = ?, location = ?, bedrooms = ?, bathroom = ?, meters = ?, description = ?, tour = ?, latitude = ?, longitude = ?, operation_type = ?, currency = ?, image = ?, galery = ?, photo_360 = ?
+        SET title = ?, price = ?, location = ?, bedrooms = ?, bathroom = ?, meters = ?, description = ?, tour = ?, latitude = ?, longitude = ?, operation_type = ?, currency = ?, image = ?, galery = ?, photo_360 = ?, is_public = ?
         WHERE id = ?
     `;
 
@@ -225,6 +241,7 @@ const updatePropiedad = catchAsync(async (req, res, next) => {
         imagePath,
         JSON.stringify(galeriaActual),
         JSON.stringify(fotos360Actuales),
+        propiedadData.is_public,
         idPropiedad
     ];
 
@@ -267,6 +284,7 @@ const deletePropiedad = catchAsync(async (req, res, next) => {
 
 module.exports = {
     getPropiedades,
+    getTodasPropiedades,
     getPropiedadById,
     createPropiedad,
     updatePropiedad,

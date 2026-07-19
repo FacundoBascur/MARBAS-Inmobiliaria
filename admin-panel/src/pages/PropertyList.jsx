@@ -10,7 +10,7 @@ export default function PropertyList() {
 
   const fetchPropiedades = async () => {
     try {
-      const res = await api.get('/propiedades');
+      const res = await api.get('/propiedades/admin');
       setPropiedades(res.data);
     } catch (err) {
       setError('Error al cargar propiedades');
@@ -71,6 +71,9 @@ export default function PropertyList() {
               </div>
               <div className="absolute top-4 left-4 bg-[#001F3F] text-[#FDC830] px-3 py-1 font-bold rounded-md text-sm shadow-md">
                 {prop.operation_type || 'En Venta'}
+              </div>
+              <div className={`absolute bottom-4 left-4 px-3 py-1 font-bold rounded-md text-xs shadow-md ${prop.is_public === 0 ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}`}>
+                {prop.is_public === 0 ? 'PRIVADO' : 'PÚBLICO'}
               </div>
             </div>
             

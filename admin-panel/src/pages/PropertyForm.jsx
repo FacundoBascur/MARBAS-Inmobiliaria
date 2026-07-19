@@ -22,7 +22,8 @@ export default function PropertyForm() {
     latitude: '',
     longitude: '',
     operation_type: 'En Venta',
-    currency: 'USD'
+    currency: 'USD',
+    is_public: '1'
   });
 
   const [files, setFiles] = useState({
@@ -67,7 +68,8 @@ export default function PropertyForm() {
               latitude: prop.latitude || '',
               longitude: prop.longitude || '',
               operation_type: prop.operation_type || 'En Venta',
-              currency: prop.currency || 'USD'
+              currency: prop.currency || 'USD',
+              is_public: prop.is_public !== undefined ? String(prop.is_public) : '1'
             });
           } else {
             setError("Propiedad no encontrada");
@@ -231,6 +233,19 @@ export default function PropertyForm() {
             >
               <option value="USD">USD</option>
               <option value="ARS">ARS</option>
+            </select>
+          </div>
+
+          <div>
+            <label className={labelClass}>Visibilidad en la Web</label>
+            <select
+              name="is_public"
+              className={inputClass}
+              value={formData.is_public}
+              onChange={handleInputChange}
+            >
+              <option value="1">Público (Todos lo ven)</option>
+              <option value="0">Privado (Solo Admin)</option>
             </select>
           </div>
 
