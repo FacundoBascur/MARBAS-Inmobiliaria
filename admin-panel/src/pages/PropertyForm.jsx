@@ -220,6 +220,7 @@ export default function PropertyForm() {
             >
               <option value="En Venta">En Venta</option>
               <option value="En Alquiler">En Alquiler</option>
+              <option value="Reservado">Reservado</option>
             </select>
           </div>
 
