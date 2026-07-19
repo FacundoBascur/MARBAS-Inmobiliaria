@@ -88,7 +88,7 @@ export default function Login() {
 
         <div className="text-center mt-[1.5rem]">
           <a 
-            href="http://localhost:5500/frontend/index.html" 
+            href="http://129.80.48.0/"  
             className="text-[#FDC830] font-bold text-[0.9rem] no-underline hover:text-[#001F3F] transition-colors"
           >
             ← Volver a la web

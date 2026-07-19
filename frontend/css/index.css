@@ -217,9 +217,11 @@
     white-space: nowrap;
 }
 
-.btn-filtrar:hover {
-    background: white;
-    transform: translateY(-2px);
+@media (hover: hover) {
+    .btn-filtrar:hover {
+        background: white;
+        transform: translateY(-2px);
+    }
 }
 
 /* ==============================================================
@@ -526,4 +528,4 @@
         padding: 3rem 5%;
     }
 }
-
+
