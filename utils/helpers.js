@@ -6,7 +6,7 @@ const validarEmail = (email) => validator.isEmail(email);
 
 const sanitizar = (text) => {
     if (!text) return '';
-    return validator.trim(validator.stripLow(text)).substring(0, 1000);
+    return validator.trim(validator.stripLow(text));
 };
 
 async function eliminarArchivos(rutas) {
