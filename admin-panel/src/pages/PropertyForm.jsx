@@ -353,7 +353,7 @@ export default function PropertyForm() {
             <label className={labelClass}>Descripción</label>
             <textarea
               name="description"
-              rows="5"
+              rows="15"
               className={inputClass}
               placeholder="Describe los detalles de la propiedad..."
               value={formData.description}
